@@ -70,11 +70,11 @@
         <div id="iphone-tab" class="tab-content">
             <h2>Wyszukiwarka okazyjnych iPhone'ów</h2>
             
-            <!-- Nawigacja po kategoriach / statusach -->
+            <!-- Nawigacja po kategoriach / statusach (po polsku) -->
             <div class="category-tabs">
                 <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
-                <button class="cat-btn" onclick="switchCategory('in_progress', event)">⏳ W trakcie</button>
-                <button class="cat-btn" onclick="switchCategory('rejected', event)">❌ Odrzucone</button>
+                <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
+                <button class="cat-btn" onclick="switchCategory('odrzucone', event)">❌ Odrzucone</button>
             </div>
 
             <div class="chat-container">
@@ -96,7 +96,7 @@
     });
 
     const container = document.getElementById('messagesContainer');
-    let currentCategory = 'nowe'; // Domyślna kategoria to 'nowe'
+    let currentCategory = 'nowe'; // Domyślna kategoria
 
     // Zmiana aktywnej zakładki
     function switchCategory(category, event) {
@@ -108,7 +108,7 @@
         fetchFilteredData();
     }
 
-    // Aktualizacja statusu ogłoszenia w bazie Supabase
+    // Aktualizacja statusu ogłoszenia w bazie Supabase na polskie wartości
     async function updateOfferStatus(offerId, newStatus) {
         try {
             const { error } = await _supabase
@@ -130,7 +130,7 @@
         }
     }
 
-    // Generator widoku karty w zależności od wybranej zakładki
+    // Generator widoku karty z polskimi przyciskami akcji
     function createCardElement(offer) {
         const card = document.createElement('div');
         card.className = 'message-card';
@@ -139,15 +139,15 @@
         let actionButtons = '';
         if (currentCategory === 'nowe') {
             actionButtons = `
-                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'in_progress')">⏳ W trakcie</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'rejected')">❌ Odrzuć</button>
+                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'w trakcie')">⏳ W trakcie</button>
+                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
             `;
-        } else if (currentCategory === 'in_progress') {
+        } else if (currentCategory === 'w trakcie') {
             actionButtons = `
                 <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowych</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'rejected')">❌ Odrzuć</button>
+                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
             `;
-        } else if (currentCategory === 'rejected') {
+        } else if (currentCategory === 'odrzucone') {
             actionButtons = `
                 <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowych</button>
             `;
@@ -176,8 +176,8 @@
             let query = _supabase.from('offers').select('*').order('id', { ascending: false });
 
             if (currentCategory === 'nowe') {
-                // Łapie status 'nowe' oraz wpisy z pustym statusem (żeby starsze testowe też się pojawiły)
-                query = query.or('status.eq.nowe,status.is.null');
+                // Łapie status 'nowe', 'okazja' oraz wpisy z pustym statusem
+                query = query.or('status.eq.nowe,status.eq.okazja,status.is.null');
             } else {
                 query = query.eq('status', currentCategory);
             }
