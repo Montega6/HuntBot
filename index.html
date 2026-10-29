@@ -12,32 +12,53 @@
         .sidebar { width: 260px; background-color: #161b26; display: flex; flex-direction: column; border-right: 1px solid #242c3d; }
         .logo { padding: 24px; font-size: 20px; font-weight: bold; color: #38bdf8; border-bottom: 1px solid #242c3d; }
         .menu-btn { background: none; border: none; color: #94a3b8; padding: 16px 24px; text-align: left; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; }
-        .menu-btn:hover { background-color: #1e2638; color: #fff; }
         .menu-btn.active { background-color: #0284c7; color: #fff; font-weight: bold; }
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; }
         .tab-content { display: flex; padding: 24px; flex-direction: column; height: 100%; overflow-y: auto; }
         .chat-container { flex: 1; background-color: #111622; border-radius: 12px; border: 1px solid #242c3d; display: flex; flex-direction: column; overflow: hidden; margin-top: 15px; }
         .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .message-card { background-color: #1b2336; border-left: 4px solid #38bdf8; padding: 16px; border-radius: 0 8px 8px 0; }
+        
+        /* Karty ogłoszeń z animacją pojawiania się na żywo */
+        .message-card { 
+            background-color: #1b2336; 
+            border-left: 4px solid #38bdf8; 
+            padding: 16px; 
+            border-radius: 0 8px 8px 0; 
+            animation: slideIn 0.4s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-15px); background-color: #0284c7; }
+            to { opacity: 1; transform: translateY(0); background-color: #1b2336; }
+        }
+
         .card-header { display: flex; justify-content: space-between; font-size: 12px; color: #64748b; margin-bottom: 6px; }
         .card-title { font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 4px; }
-        .card-price { font-size: 18px; color: #38bdf8; font-weight: bold; }
+        .card-price { font-size: 18px; color: #22c55e; font-weight: bold; }
         .card-link { display: inline-block; margin-top: 8px; color: #94a3b8; font-size: 14px; text-decoration: none; }
         .card-link:hover { color: #38bdf8; text-decoration: underline; }
+        
+        .status-badge {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: #0284c7;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <div class="logo">🎯 HuntBot Panel</div>
-        <button class="menu-btn active">📱 Bot iPhone (OLX/Allegro)</button>
+        <button class="menu-btn active">📱 Bot iPhone (OLX Live)</button>
     </div>
     <div class="main-content">
         <div id="iphone-tab" class="tab-content">
-            <h2>Wyszukiwarka ogłoszeń: iPhone</h2>
-            <p style="color: #64748b;">Nowe ogłoszenia pojawią się tutaj na żywo.</p>
+            <h2>Wyszukiwarka okazyjnych iPhone'ów</h2>
+            <p style="color: #64748b;">🔴 Połączenie na żywo włączone. Okazje pojawiają się automatycznie bez odświeżania!</p>
             <div class="chat-container">
                 <div id="messagesContainer" class="chat-messages">
-                    <p style="color: #38bdf8; text-align: center;">Ładowanie danych...</p>
+                    <p style="color: #38bdf8; text-align: center;">Połączono. Oczekiwanie na pierwsze okazje...</p>
                 </div>
             </div>
         </div>
@@ -50,17 +71,31 @@
     const { createClient } = supabase;
     const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: false },
-        global: {
-            headers: {
-                'apikey': SUPABASE_KEY
-            }
-        }
+        global: { headers: { 'apikey': SUPABASE_KEY } }
     });
 
-    async function fetchDatabase() {
-        const container = document.getElementById('messagesContainer');
-        console.log("Rozpoczynam pobieranie danych z Supabase...");
-        
+    const container = document.getElementById('messagesContainer');
+
+    // Funkcja pomocnicza do budowania karty ogłoszenia
+    function createCardElement(offer) {
+        const card = document.createElement('div');
+        card.className = 'message-card';
+        card.id = `offer-${offer.id}`;
+        card.innerHTML = `
+            <div class="card-header">
+                <span>${offer.source || 'OLX Hunter'}</span>
+                <span class="status-badge">Okazja!</span>
+            </div>
+            <div class="card-title">${offer.title || 'Brak tytułu'}</div>
+            <div class="card-price">${offer.price ? offer.price + ' zł' : 'Brak ceny'}</div>
+            <p style="font-size: 14px; margin-top: 5px; color: #94a3b8;">${offer.description || ''}</p>
+            ${offer.url ? `<a href="${offer.url}" target="_blank" class="card-link">🔗 Otwórz ofertę na OLX</a>` : ''}
+        `;
+        return card;
+    }
+
+    // 1. Ładowanie istniejących ofert na start
+    async function fetchInitialData() {
         try {
             const { data, error } = await _supabase
                 .from('offers')
@@ -69,38 +104,43 @@
 
             if (error) throw error;
 
-            console.log("Sukces! Pobrano dane:", data);
             container.innerHTML = '';
-
             if (!data || data.length === 0) {
-                container.innerHTML = `<p style="color: #22c55e; text-align: center; font-weight: bold;">✅ Połączenie z bazą udane! Tabela 'offers' jest aktualnie pusta.</p>`;
+                container.innerHTML = `<p style="color: #64748b; text-align: center;">Tabela 'offers' jest pusta. Oczekiwanie na bota...</p>`;
                 return;
             }
 
             data.forEach(offer => {
-                const card = document.createElement('div');
-                card.className = 'message-card';
-                card.innerHTML = `
-                    <div class="card-header">
-                        <span>${offer.source || 'Bot'}</span>
-                        <span>Status: ${offer.status || 'Nowe'}</span>
-                    </div>
-                    <div class="card-title">${offer.title || 'Brak tytułu'}</div>
-                    <div class="card-price">${offer.price ? offer.price + ' zł' : 'Cena do negocjacji'}</div>
-                    <p style="font-size: 14px; margin-top: 5px; color: #94a3b8;">${offer.description || ''}</p>
-                    ${offer.url ? `<a href="${offer.url}" target="_blank" class="card-link">🔗 Zobacz ogłoszenie</a>` : ''}
-                `;
-                container.appendChild(card);
+                container.appendChild(createCardElement(offer));
             });
-
         } catch (err) {
-            console.error("Szczegóły błędu:", err);
-            container.innerHTML = `<p style="color: #ef4444; text-align: center; font-weight: bold;">⚠️ Błąd połączenia: ${err.message || JSON.stringify(err)}</p>`;
+            console.error("Błąd pobierania:", err);
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Błąd: ${err.message}</p>`;
         }
     }
 
-    fetchDatabase();
-    setInterval(fetchDatabase, 7000);
+    // 2. SUBSKRYPCJA NA ŻYWO (Realtime WebSocket)
+    function subscribeToRealtime() {
+        _supabase
+            .channel('public:offers')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'offers' }, payload => {
+                console.log("🔥 Nowa oferta na żywo:", payload.new);
+                
+                // Jeśli był napis o pustej bazie, usuwamy go
+                if (container.querySelector('p')) {
+                    container.innerHTML = '';
+                }
+                
+                // Wstawiamy nową kartę na samą górę listy!
+                const newCard = createCardElement(payload.new);
+                container.insertBefore(newCard, container.firstChild);
+            })
+            .subscribe();
+    }
+
+    // Start
+    fetchInitialData();
+    subscribeToRealtime();
 </script>
 </body>
 </html>
