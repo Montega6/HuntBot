@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Bot Dashboard</title>
+    <title>HuntBot panel</title>
     <!-- Oficjalna biblioteka Supabase przez CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -39,11 +39,26 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.2s, color 0.2s; }
         body { display: flex; height: 100vh; background-color: var(--bg-body); color: var(--text-main); overflow: hidden; }
         
-        .sidebar { width: 260px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+        .sidebar { width: 280px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
         .logo { padding: 24px; font-size: 20px; font-weight: bold; color: #38bdf8; border-bottom: 1px solid var(--border-color); }
-        .menu-btn { background: none; border: none; color: var(--text-muted); padding: 16px 24px; text-align: left; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; }
+        
+        .menu-group { display: flex; flex-direction: column; }
+        .menu-btn { background: none; border: none; color: var(--text-muted); padding: 16px 24px; text-align: left; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+        .menu-btn:hover { background-color: var(--border-color); color: var(--text-main); }
         .menu-btn.active { background-color: var(--accent); color: #fff; font-weight: bold; }
         
+        /* Rozwijana podzakładka */
+        .submenu { 
+            display: none; 
+            flex-direction: column; 
+            background-color: rgba(0,0,0,0.1); 
+            border-bottom: 1px solid var(--border-color);
+        }
+        .submenu.open { display: flex; }
+        .submenu-btn { background: none; border: none; color: var(--text-muted); padding: 12px 24px 12px 40px; text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; width: 100%; }
+        .submenu-btn:hover { color: var(--text-main); background-color: var(--border-color); }
+        .submenu-btn.active { color: #38bdf8; font-weight: bold; }
+
         .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; background-color: var(--bg-main); }
         
         /* Górny pasek z nagłówkiem i przełącznikiem motywu */
@@ -51,7 +66,8 @@
         .theme-toggle-btn { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
         .theme-toggle-btn:hover { background-color: var(--border-color); }
 
-        .tab-content { display: flex; padding: 24px; flex-direction: column; height: 100%; overflow-y: auto; }
+        .tab-content { display: none; padding: 24px; flex-direction: column; height: 100%; overflow-y: auto; }
+        .tab-content.active { display: flex; }
         
         /* Pasek kategorii / filtrów */
         .category-tabs { display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; }
@@ -97,281 +113,4 @@
         .btn-reject:hover { background-color: #dc2626; }
         .btn-restore { background-color: var(--accent); color: #fff; }
         .btn-restore:hover { background-color: var(--accent-hover); }
-        .btn-delete { background-color: var(--text-dimmed); color: #fff; }
-        .btn-delete:hover { background-color: var(--text-muted); }
-
-        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: var(--accent); color: #fff; }
-
-        /* Własne okienko GUI (Modal) na środku ekranu */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-        .modal-overlay.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        .modal-box {
-            background-color: var(--bg-sidebar);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-            width: 380px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            transform: scale(0.95);
-            transition: transform 0.2s ease;
-        }
-        .modal-overlay.active .modal-box {
-            transform: scale(1);
-        }
-        .modal-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin-bottom: 10px; }
-        .modal-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-        .modal-btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .modal-btn-cancel { background-color: var(--border-color); color: var(--text-muted); }
-        .modal-btn-cancel:hover { background-color: var(--text-dimmed); color: var(--text-main); }
-        .modal-btn-confirm { background-color: #ef4444; color: #fff; }
-        .modal-btn-confirm:hover { background-color: #dc2626; }
-    </style>
-</head>
-<body data-theme="dark">
-    <div class="sidebar">
-        <div class="logo">🎯 HuntBot Panel</div>
-        <button class="menu-btn active">📱 Bot iPhone (OLX Live)</button>
-    </div>
-    <div class="main-content">
-        <div id="iphone-tab" class="tab-content">
-            
-            <!-- Górny pasek: Nagłówek + Przycisk zmiany motywu -->
-            <div class="top-bar">
-                <h2>Wyszukiwarka okazyjnych iPhone'ów</h2>
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
-                    <span id="themeIcon">☀️</span> <span id="themeText">Tryb jasny</span>
-                </button>
-            </div>
-            
-            <!-- Nawigacja po kategoriach / statusach -->
-            <div class="category-tabs">
-                <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
-                <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
-                <button class="cat-btn" onclick="switchCategory('odrzucone', event)">❌ Odrzucone</button>
-            </div>
-
-            <div class="chat-container">
-                <div id="messagesContainer" class="chat-messages">
-                    <p style="color: var(--text-muted); text-align: center;">Ładowanie ofert...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Własne okienko potwierdzenia (GUI Modal) -->
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">Potwierdź usunięcie</div>
-            <div class="modal-desc">Czy na pewno chcesz trwale usunąć to ogłoszenie z bazy danych? Tej operacji nie można cofnąć.</div>
-            <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Anuluj</button>
-                <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">Usuń trwale</button>
-            </div>
-        </div>
-    </div>
-
-<script>
-    const SUPABASE_URL = "https://nikvmsybrtgxcyuqpgkd.supabase.co"; 
-    const SUPABASE_KEY = "sb_publishable_jUHmB7NrrMhlV4FjKYo1yQ_xBt7blfX"; 
-    
-    const { createClient } = supabase;
-    const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: { persistSession: false },
-        global: { headers: { 'apikey': SUPABASE_KEY } }
-    });
-
-    const container = document.getElementById('messagesContainer');
-    let currentCategory = 'nowe'; 
-    let offerToDeleteId = null;
-
-    // Przełączanie motywu (Ciemny / Jasny)
-    function toggleTheme() {
-        const body = document.body;
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.setAttribute('data-theme', 'light');
-            themeIcon.textContent = '🌙';
-            themeText.textContent = 'Tryb ciemny';
-        } else {
-            body.setAttribute('data-theme', 'dark');
-            themeIcon.textContent = '☀️';
-            themeText.textContent = 'Tryb jasny';
-        }
-    }
-
-    // Zmiana aktywnej zakładki
-    function switchCategory(category, event) {
-        currentCategory = category;
-        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-        if (event && event.target) {
-            event.target.classList.add('active');
-        }
-        fetchFilteredData();
-    }
-
-    // Aktualizacja statusu ogłoszenia w bazie Supabase
-    async function updateOfferStatus(offerId, newStatus) {
-        try {
-            const { error } = await _supabase
-                .from('offers')
-                .update({ status: newStatus })
-                .eq('id', offerId);
-
-            if (error) throw error;
-
-            const card = document.getElementById(`offer-${offerId}`);
-            if (card) {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
-                setTimeout(() => card.remove(), 250);
-            }
-        } catch (err) {
-            alert("Błąd aktualizacji statusu: " + err.message);
-        }
-    }
-
-    // Otwieranie własnego modalu potwierdzenia
-    function promptDeleteOffer(offerId) {
-        offerToDeleteId = offerId;
-        document.getElementById('confirmModal').classList.add('active');
-    }
-
-    // Zamykanie modalu
-    function closeModal() {
-        offerToDeleteId = null;
-        document.getElementById('confirmModal').classList.remove('active');
-    }
-
-    // Obsługa kliknięcia przycisku "Usuń trwale" wewnątrz modalu
-    document.getElementById('modalConfirmBtn').onclick = async function() {
-        if (!offerToDeleteId) return;
-        const idToDelete = offerToDeleteId;
-        closeModal();
-
-        try {
-            const { error } = await _supabase
-                .from('offers')
-                .delete()
-                .eq('id', idToDelete);
-
-            if (error) throw error;
-
-            const card = document.getElementById(`offer-${idToDelete}`);
-            if (card) {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
-                setTimeout(() => card.remove(), 250);
-            }
-        } catch (err) {
-            alert("Błąd podczas usuwania ogłoszenia: " + err.message);
-        }
-    };
-
-    // Generator widoku karty
-    function createCardElement(offer) {
-        const card = document.createElement('div');
-        card.className = 'message-card';
-        card.id = `offer-${offer.id}`;
-
-        let actionButtons = '';
-        if (currentCategory === 'nowe') {
-            actionButtons = `
-                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'w trakcie')">⏳ W trakcie</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
-            `;
-        } else if (currentCategory === 'w trakcie') {
-            actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowych</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
-            `;
-        } else if (currentCategory === 'odrzucone') {
-            actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowych</button>
-                <button class="action-btn btn-delete" onclick="promptDeleteOffer(${offer.id})">🗑️ Usuń trwale</button>
-            `;
-        }
-
-        card.innerHTML = `
-            <div class="card-header">
-                <span>${offer.source || 'OLX Hunter'}</span>
-                <span class="status-badge">${offer.status || 'nowe'}</span>
-            </div>
-            <div class="card-title">${offer.title || 'Brak tytułu'}</div>
-            <div class="card-price">${offer.price ? offer.price + ' zł' : 'Brak ceny'}</div>
-            <p style="font-size: 14px; color: var(--text-muted);">${offer.description || ''}</p>
-            ${offer.url ? `<a href="${offer.url}" target="_blank" class="card-link">🔗 Otwórz ofertę na OLX</a>` : ''}
-            <div class="card-actions">
-                ${actionButtons}
-            </div>
-        `;
-        return card;
-    }
-
-    // Pobieranie przefiltrowanych danych z Supabase
-    async function fetchFilteredData() {
-        container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Wczytywanie...</p>`;
-        try {
-            let query = _supabase.from('offers').select('*').order('id', { ascending: false });
-
-            if (currentCategory === 'nowe') {
-                query = query.or('status.eq.nowe,status.eq.okazja,status.is.null');
-            } else {
-                query = query.eq('status', currentCategory);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            container.innerHTML = '';
-            if (!data || data.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Brak ogłoszeń w tej kategorii.</p>`;
-                return;
-            }
-
-            data.forEach(offer => {
-                container.appendChild(createCardElement(offer));
-            });
-        } catch (err) {
-            console.error("Błąd pobierania:", err);
-            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Błąd: ${err.message}</p>`;
-        }
-    }
-
-    // Subskrypcja zdarzeń na żywo (Realtime)
-    function subscribeToRealtime() {
-        _supabase
-            .channel('public:offers')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, payload => {
-                if (payload.eventType === 'INSERT' && currentCategory === 'nowe') {
-                    if (container.querySelector('p')) container.innerHTML = '';
-                    const newCard = createCardElement(payload.new);
-                    container.insertBefore(newCard, container.firstChild);
-                }
-            })
-            .subscribe();
-    }
-
-    // Start
-    fetchFilteredData();
-    subscribeToRealtime();
-</script>
-</body>
-</html>
+        .btn-delete {
