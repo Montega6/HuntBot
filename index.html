@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Bot Dashboard</title>
+    <title>HuntBot Panel</title>
     <!-- Oficjalna biblioteka Supabase przez CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -57,6 +57,8 @@
         .btn-reject:hover { background-color: #dc2626; }
         .btn-restore { background-color: #0284c7; color: #fff; }
         .btn-restore:hover { background-color: #0369a1; }
+        .btn-delete { background-color: #64748b; color: #fff; }
+        .btn-delete:hover { background-color: #475569; }
 
         .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: #0284c7; color: #fff; }
     </style>
@@ -70,7 +72,7 @@
         <div id="iphone-tab" class="tab-content">
             <h2>Wyszukiwarka okazyjnych iPhone'ów</h2>
             
-            <!-- Nawigacja po kategoriach / statusach (po polsku) -->
+            <!-- Nawigacja po kategoriach / statusach -->
             <div class="category-tabs">
                 <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
                 <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
@@ -108,7 +110,7 @@
         fetchFilteredData();
     }
 
-    // Aktualizacja statusu ogłoszenia w bazie Supabase na polskie wartości
+    // Aktualizacja statusu ogłoszenia w bazie Supabase
     async function updateOfferStatus(offerId, newStatus) {
         try {
             const { error } = await _supabase
@@ -130,7 +132,32 @@
         }
     }
 
-    // Generator widoku karty z polskimi przyciskami akcji
+    // Trwałe usunięcie ogłoszenia z bazy danych z oknem potwierdzenia
+    async function deleteOffer(offerId) {
+        const confirmed = confirm("Czy na pewno chcesz trwale usunąć to ogłoszenie z bazy danych?");
+        if (!confirmed) return;
+
+        try {
+            const { error } = await _supabase
+                .from('offers')
+                .delete()
+                .eq('id', offerId);
+
+            if (error) throw error;
+
+            // Płynne usunięcie karty z ekranu
+            const card = document.getElementById(`offer-${offerId}`);
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(10px)';
+                setTimeout(() => card.remove(), 250);
+            }
+        } catch (err) {
+            alert("Błąd podczas usuwania ogłoszenia: " + err.message);
+        }
+    }
+
+    // Generator widoku karty z przyciskami dopasowanymi do zakładki
     function createCardElement(offer) {
         const card = document.createElement('div');
         card.className = 'message-card';
@@ -150,6 +177,7 @@
         } else if (currentCategory === 'odrzucone') {
             actionButtons = `
                 <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowych</button>
+                <button class="action-btn btn-delete" onclick="deleteOffer(${offer.id})">🗑️ Usuń trwale</button>
             `;
         }
 
@@ -176,7 +204,6 @@
             let query = _supabase.from('offers').select('*').order('id', { ascending: false });
 
             if (currentCategory === 'nowe') {
-                // Łapie status 'nowe', 'okazja' oraz wpisy z pustym statusem
                 query = query.or('status.eq.nowe,status.eq.okazja,status.is.null');
             } else {
                 query = query.eq('status', currentCategory);
@@ -205,7 +232,6 @@
         _supabase
             .channel('public:offers')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'offers' }, payload => {
-                // Jeśli dodano nową ofertę i jesteśmy w zakładce 'Nowe', wstawiamy ją na górę
                 if (payload.eventType === 'INSERT' && currentCategory === 'nowe') {
                     if (container.querySelector('p')) container.innerHTML = '';
                     const newCard = createCardElement(payload.new);
