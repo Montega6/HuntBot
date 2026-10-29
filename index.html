@@ -118,6 +118,13 @@
 
         .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: var(--accent); color: #fff; }
 
+        /* Tabela średnich cen */
+        .prices-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .prices-table th, .prices-table td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
+        .prices-table th { background-color: var(--bg-card); color: var(--text-muted); font-size: 14px; text-transform: uppercase; }
+        .prices-table td { font-size: 15px; color: var(--text-main); }
+        .prices-table tr:hover { background-color: var(--bg-card); }
+
         /* Własne okienko GUI (Modal) na środku ekranu */
         .modal-overlay {
             position: fixed;
@@ -198,19 +205,30 @@
             </div>
         </div>
 
-        <!-- 2. Nowa podzakładka: Średnie ceny Iphone -->
+        <!-- 2. Podzakładka: Średnie ceny Iphone -->
         <div id="tab-prices" class="tab-content">
             <div class="top-bar">
-                <h2>Analiza średnich cen rynkowych iPhone</h2>
+                <h2>Analiza średnich cen rynkowych iPhone (OLX)</h2>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span>☀️</span> <span>Tryb jasny</span>
                 </button>
             </div>
             
-            <div class="chat-container" style="padding: 24px; display: flex; justify-content: center; align-items: center;">
-                <p style="color: var(--text-muted); font-size: 16px; text-align: center;">
-                    📊 Modół średnich cen rynkowych w przygotowaniu.<br>Tutaj bot będzie prezentował aktualne wyliczenia bazowe dla poszczególnych modeli.
-                </p>
+            <div class="chat-container" style="padding: 0; overflow-y: auto;">
+                <table class="prices-table">
+                    <thead>
+                        <tr>
+                            <th>Model</th>
+                            <th>Średnia cena rynkowa</th>
+                            <th>Liczba przeanalizowanych ofert</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricesTableBody">
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: var(--text-muted);">Ładowanie danych rynkowych...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -256,6 +274,7 @@
             document.getElementById('tab-live').classList.add('active');
         } else if (tabName === 'prices') {
             document.getElementById('tab-prices').classList.add('active');
+            fetchMarketAverages(); // Pobieranie średnich cen przy wejściu w zakładkę
         }
 
         if (event && event.target) {
@@ -348,7 +367,7 @@
         }
     };
 
-    // Generator widoku karty
+    // Generator widoku karty ogłoszenia
     function createCardElement(offer) {
         const card = document.createElement('div');
         card.className = 'message-card';
@@ -388,7 +407,7 @@
         return card;
     }
 
-    // Pobieranie przefiltrowanych danych z Supabase
+    // Pobieranie przefiltrowanych danych ogłoszeń z Supabase
     async function fetchFilteredData() {
         container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Wczytywanie...</p>`;
         try {
@@ -415,6 +434,40 @@
         } catch (err) {
             console.error("Błąd pobierania:", err);
             container.innerHTML = `<p style="color: #ef4444; text-align: center;">Błąd: ${err.message}</p>`;
+        }
+    }
+
+    // Pobieranie średnich cen rynkowych z tabeli 'market_averages'
+    async function fetchMarketAverages() {
+        const tbody = document.getElementById('pricesTableBody');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Pobieranie aktualnych średnich cen...</td></tr>';
+        
+        try {
+            const { data, error } = await _supabase
+                .from('market_averages')
+                .select('*')
+                .order('model', { ascending: true });
+
+            if (error) throw error;
+
+            tbody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Brak zaktualizowanych średnich cen. Bot jeszcze nie przeliczył danych.</td></tr>';
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: #38bdf8;">${item.model}</td>
+                    <td style="color: #22c55e; font-weight: bold;">${item.avg_price ? item.avg_price + ' zł' : 'Brak danych'}</td>
+                    <td>${item.offers_count || 0} ofert</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (err) {
+            console.error("Błąd pobierania średnich cen:", err);
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #ef4444;">Błąd: ${err.message}</td></tr>`;
         }
     }
 
