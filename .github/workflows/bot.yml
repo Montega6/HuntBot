@@ -1,0 +1,30 @@
+name: Codzienny Bot Średnich Cen iPhone
+
+on:
+  schedule:
+    # Uruchamia się codziennie o 10:00 UTC (12:00 czasu polskiego)
+    - cron: '0 10 * * *'
+  workflow_dispatch: # Pozwala na ręczne uruchomienie w każdej chwili z poziomu GitHuba
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pobierz kod repozytorium
+        uses: actions/checkout@v4
+
+      - name: Konfiguracja Pythona
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Instalacja zależności
+        run: |
+          pip install requests supabase
+
+      - name: Uruchomienie bota
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python bot_prices.py
