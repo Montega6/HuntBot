@@ -425,7 +425,6 @@
     let isRegisterMode = false;
     let currentUser = null;
 
-    // Funkcja szyfrująca hasło za pomocą Web Crypto API (SHA-256)
     async function hashPassword(password) {
         const msgBuffer = new TextEncoder().encode(password);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -785,17 +784,16 @@
         }
     }
 
-    async function sendSelectedDealsToLive(modelName, targetStatus) {
+    async function sendSelectedDealsToLive(modelIndex, targetStatus) {
         try {
-            const safeClass = encodeURIComponent(modelName).replace(/['()]/g, escape);
-            const checkboxes = document.querySelectorAll(`.cb-${safeClass}:checked`);
+            const checkboxes = document.querySelectorAll(`.cb-model-${modelIndex}:checked`);
             
             if (checkboxes.length === 0) {
                 showToast("Zaznacz przynajmniej jedną ofertę!");
                 return;
             }
 
-            const item = currentMarketData.find(m => m.model === modelName);
+            const item = currentMarketData[modelIndex];
             if (!item) return;
 
             let dealsList = Array.isArray(item.deals) ? [...item.deals] : [];
@@ -826,11 +824,11 @@
             const { error: updateError } = await _supabase
                 .from('market_averages')
                 .update({ deals: dealsList })
-                .eq('model', modelName);
+                .eq('model', item.model);
 
             if (updateError) throw updateError;
 
-            openDetailsModels.add(modelName);
+            openDetailsModels.add(item.model);
             showToast(`Przeniesiono ${indicesToRemove.length} ofert do "${targetStatus}"!`);
             fetchMarketAverages();
         } catch (err) {
@@ -1009,22 +1007,21 @@
                 return;
             }
 
-            currentMarketData.forEach(item => {
+            currentMarketData.forEach((item, modelIndex) => {
                 const deals = Array.isArray(item.deals) ? item.deals : [];
                 const dealsCount = deals.length;
                 
                 let dealsListHtml = '';
                 if (dealsCount > 0) {
                     const safeModelAttr = item.model.replace(/'/g, "\\'");
-                    const safeClass = encodeURIComponent(item.model).replace(/['()]/g, escape);
 
                     dealsListHtml += `
                         <div class="bulk-actions-mobile" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px; border-radius: 4px; flex-wrap: wrap; gap: 8px;">
                             <span style="font-size: 12px; color: var(--text-muted);">Zaznaczone okazje:</span>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                <button class="mini-btn mini-btn-nowe" onclick="sendSelectedDealsToLive('${safeModelAttr}', 'nowe')">🔥 Przenieś zaznaczone do Nowe</button>
-                                <button class="mini-btn mini-btn-trakcie" onclick="sendSelectedDealsToLive('${safeModelAttr}', 'w trakcie')">⏳ Przenieś zaznaczone do W trakcie</button>
-                                <button class="mini-btn mini-btn-odrzucone" onclick="sendSelectedDealsToLive('${safeModelAttr}', 'odrzucone')">❌ Odrzuć zaznaczone</button>
+                                <button class="mini-btn mini-btn-nowe" onclick="sendSelectedDealsToLive(${modelIndex}, 'nowe')">🔥 Przenieś zaznaczone do Nowe</button>
+                                <button class="mini-btn mini-btn-trakcie" onclick="sendSelectedDealsToLive(${modelIndex}, 'w trakcie')">⏳ Przenieś zaznaczone do W trakcie</button>
+                                <button class="mini-btn mini-btn-odrzucone" onclick="sendSelectedDealsToLive(${modelIndex}, 'odrzucone')">❌ Odrzuć zaznaczone</button>
                             </div>
                         </div>
                     `;
@@ -1035,7 +1032,7 @@
                         return `
                         <div class="deal-item-mobile" style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
                             <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-                                <input type="checkbox" class="cb-${safeClass}" value="${index}" style="cursor: pointer; width: 18px; height: 18px;">
+                                <input type="checkbox" class="cb-model-${modelIndex}" value="${index}" style="cursor: pointer; width: 18px; height: 18px;">
                                 <a href="${d.link}" target="_blank" style="color: #38ef7d; text-decoration: none; font-weight: 500; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                                     🔗 ${d.title}
                                 </a>
