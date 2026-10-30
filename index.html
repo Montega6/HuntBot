@@ -223,7 +223,7 @@
                 <button class="submenu-btn active" onclick="switchTab('live', event)">🔴 OLX Live</button>
                 <button class="submenu-btn" onclick="switchTab('prices', event)">📊 Średnie ceny Iphone</button>
             </div>
-            <!-- Panel Administratora (widoczny tylko dla admina) -->
+            <!-- Panel Administratora -->
             <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="switchTab('admin', event)">
                 <span>⚙️ Panel Administratora</span>
             </button>
@@ -232,6 +232,7 @@
         <div class="user-panel-footer">
             <div>Zalogowany: <strong id="loggedUsername" style="color: #38bdf8;">-</strong></div>
             <div>Ranga: <span id="loggedUserRole" style="color: #f59e0b; font-weight: bold;">-</span></div>
+            <div id="loggedUserExpiry" style="font-size: 11px; color: var(--text-dimmed);"></div>
             <button class="logout-btn" onclick="logoutUser()">Wyloguj się</button>
         </div>
     </div>
@@ -334,14 +335,35 @@
     let isRegisterMode = false;
     let currentUser = null;
 
-    // Sprawdzenie sesji przy załadowaniu strony
-    window.addEventListener('DOMContentLoaded', () => {
+    // Sprawdzenie i automatyczna weryfikacja daty wygaśnięcia subskrypcji
+    window.addEventListener('DOMContentLoaded', async () => {
         const savedUser = localStorage.getItem('huntbot_user');
         if (savedUser) {
-            currentUser = JSON.parse(savedUser);
+            const parsed = JSON.parse(savedUser);
+            const { data } = await _supabase.from('users').select('*').eq('id', parsed.id).single();
+            if (data) {
+                currentUser = await checkUserRoleExpiration(data);
+                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+            } else {
+                currentUser = parsed;
+            }
             initSession();
         }
     });
+
+    // Sprawdza czy rola czasowa minęła, i w razie potrzeby degraduje użytkownika
+    async function checkUserRoleExpiration(user) {
+        if (user.role_expires_at) {
+            const now = new Date();
+            const expiresAt = new Date(user.role_expires_at);
+            if (now > expiresAt && user.role !== 'Brak subskrypcji') {
+                user.role = 'Brak subskrypcji';
+                user.role_expires_at = null;
+                await _supabase.from('users').update({ role: 'Brak subskrypcji', role_expires_at: null }).eq('id', user.id);
+            }
+        }
+        return user;
+    }
 
     function toggleAuthMode() {
         isRegisterMode = !isRegisterMode;
@@ -358,28 +380,25 @@
 
         try {
             if (isRegisterMode) {
-                // Sprawdź czy użytkownik istnieje
                 const { data: existing } = await _supabase.from('users').select('*').eq('username', username).single();
                 if (existing) {
                     alert("Taki użytkownik już istnieje!");
                     return;
                 }
-                // Rejestracja z domyślną rangą 'Brak subskrypcji'
-                const { data, error } = await _supabase.from('users').insert([{
+                const { error } = await _supabase.from('users').insert([{
                     username: username, password: password, role: 'Brak subskrypcji'
-                }]).select().single();
+                }]);
                 if (error) throw error;
 
                 alert("Zarejestrowano pomyślnie! Możesz się teraz zalogować.");
                 toggleAuthMode();
             } else {
-                // Logowanie
                 const { data, error } = await _supabase.from('users').select('*').eq('username', username).eq('password', password).single();
                 if (error || !data) {
                     alert("Błędna nazwa użytkownika lub hasło!");
                     return;
                 }
-                currentUser = data;
+                currentUser = await checkUserRoleExpiration(data);
                 localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
                 initSession();
             }
@@ -392,6 +411,14 @@
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('loggedUsername').textContent = currentUser.username;
         document.getElementById('loggedUserRole').textContent = currentUser.role;
+
+        const expiryEl = document.getElementById('loggedUserExpiry');
+        if (currentUser.role_expires_at) {
+            const expDate = new Date(currentUser.role_expires_at).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            expiryEl.textContent = `Ważne do: ${expDate}`;
+        } else {
+            expiryEl.textContent = currentUser.role === 'Brak subskrypcji' ? '' : 'Dostęp bezterminowy';
+        }
 
         if (currentUser.role === 'Administrator') {
             document.getElementById('adminMenuBtn').style.display = 'flex';
@@ -467,20 +494,33 @@
             }
 
             data.forEach(u => {
+                let expiryStr = "Na stałe";
+                if (u.role_expires_at) {
+                    expiryStr = new Date(u.role_expires_at).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                }
+
                 const div = document.createElement('div');
-                div.style.cssText = "background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;";
+                div.style.cssText = "background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;";
                 div.innerHTML = `
                     <div>
                         <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${u.username}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Aktualna ranga: <span style="color: #f59e0b; font-weight: bold;">${u.role}</span></div>
+                        <div style="font-size: 12px; color: var(--text-muted);">Ranga: <span style="color: #f59e0b; font-weight: bold;">${u.role}</span> (${expiryStr})</div>
                     </div>
-                    <div style="display: flex; gap: 8px; align-items: center;">
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                         <select id="role-select-${u.id}" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
                             <option value="Brak subskrypcji" ${u.role === 'Brak subskrypcji' ? 'selected' : ''}>Brak subskrypcji</option>
                             <option value="Subskrypcja" ${u.role === 'Subskrypcja' ? 'selected' : ''}>Subskrypcja</option>
                             <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
                         </select>
-                        <button onclick="updateUserRole(${u.id})" class="mini-btn mini-btn-nowe" style="padding: 6px 12px;">Zmień rangę</button>
+
+                        <select id="time-type-${u.id}" onchange="toggleDaysInput(${u.id})" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
+                            <option value="forever">Na stałe</option>
+                            <option value="days">Na dni</option>
+                        </select>
+
+                        <input type="number" id="days-input-${u.id}" placeholder="Dni" min="1" value="30" style="display: none; width: 65px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
+
+                        <button onclick="updateUserRole(${u.id})" class="mini-btn mini-btn-nowe" style="padding: 6px 12px;">Zapisz</button>
                     </div>
                 `;
                 adminBox.appendChild(div);
@@ -490,16 +530,43 @@
         }
     }
 
+    function toggleDaysInput(userId) {
+        const timeType = document.getElementById(`time-type-${userId}`).value;
+        const daysInput = document.getElementById(`days-input-${userId}`);
+        daysInput.style.display = (timeType === 'days') ? 'inline-block' : 'none';
+    }
+
     async function updateUserRole(userId) {
-        const select = document.getElementById(`role-select-${userId}`);
-        const newRole = select.value;
+        const newRole = document.getElementById(`role-select-${userId}`).value;
+        const timeType = document.getElementById(`time-type-${userId}`).value;
+        let expiresAt = null;
+
+        if (timeType === 'days' && newRole !== 'Brak subskrypcji') {
+            const daysCount = parseInt(document.getElementById(`days-input-${userId}`).value) || 30;
+            const now = new Date();
+            now.setDate(now.getDate() + daysCount);
+            expiresAt = now.toISOString();
+        }
+
         try {
-            const { error } = await _supabase.from('users').update({ role: newRole }).eq('id', userId);
+            const { error } = await _supabase.from('users').update({ 
+                role: newRole, 
+                role_expires_at: expiresAt 
+            }).eq('id', userId);
+
             if (error) throw error;
-            showToast("Zaktualizowano rangę użytkownika!");
+            showToast("Zaktualizowano rangę i czas!");
+            
+            if (currentUser && currentUser.id === userId) {
+                currentUser.role = newRole;
+                currentUser.role_expires_at = expiresAt;
+                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                initSession();
+            }
+
             fetchAdminUsers();
         } catch (err) {
-            showToast("Błąd aktualizacji rangi");
+            showToast("Błąd aktualizacji: " + err.message);
         }
     }
 
