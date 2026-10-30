@@ -127,6 +127,7 @@
         .mini-btn-odrzucone { background-color: #ef4444; }
         .mini-btn-odrzucone:hover { background-color: #dc2626; }
         
+        /* Własne okienko modala */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -145,9 +146,39 @@
         .modal-btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
         .modal-btn-cancel { background-color: var(--border-color); color: var(--text-muted); }
         .modal-btn-confirm { background-color: #ef4444; color: #fff; }
+
+        /* Styl dla powiadomień typu toast na środku ekranu */
+        #customToast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background-color: var(--bg-sidebar);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 12px 24px;
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            z-index: 9999;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #customToast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body data-theme="dark">
+    <!-- Powiadomienie na środku ekranu -->
+    <div id="customToast">✅ <span id="toastText">Powiadomienie</span></div>
+
     <div class="sidebar">
         <div class="logo">🎯 HuntBot Panel</div>
         
@@ -241,7 +272,18 @@
     let currentCategory = 'nowe'; 
     let offerToDeleteId = null;
     let selectedOfferId = null;
-    let currentMarketData = []; // Przechowuje pobrane rekordy ze średnich cen
+    let currentMarketData = [];
+
+    // Funkcja wyświetlająca ładny komunikat na środku ekranu
+    function showToast(message) {
+        const toast = document.getElementById('customToast');
+        const toastText = document.getElementById('toastText');
+        toastText.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2500);
+    }
 
     function toggleIphoneMenu() {
         document.getElementById('iphoneSubmenu').classList.toggle('open');
@@ -301,12 +343,12 @@
                 card.style.opacity = '0';
                 setTimeout(() => card.remove(), 250);
             }
+            showToast(`Zmieniono status na: ${newStatus}`);
         } catch (err) {
-            alert("Błąd: " + err.message);
+            showToast("Błąd: " + err.message);
         }
     }
 
-    // Bezpieczne przenoszenie do OLX Live i czyszczenie z listy średnich cen
     async function sendDealToLiveAndRemove(modelName, dealIndex, targetStatus) {
         try {
             const item = currentMarketData.find(m => m.model === modelName);
@@ -316,7 +358,6 @@
             const deal = dealsList[dealIndex];
             if (!deal) return;
 
-            // 1. Dodaj ogłoszenie do tabeli 'offers'
             const { error: insertError } = await _supabase.from('offers').insert([{
                 title: deal.title, 
                 price: deal.price, 
@@ -327,10 +368,8 @@
             }]);
             if (insertError) throw insertError;
 
-            // 2. Usuń element z tablicy
             dealsList.splice(dealIndex, 1);
 
-            // 3. Zaktualizuj tablicę 'deals' w bazie dla danego modelu
             const { error: updateError } = await _supabase
                 .from('market_averages')
                 .update({ deals: dealsList })
@@ -338,10 +377,10 @@
                 
             if (updateError) throw updateError;
 
-            alert(`✅ Przeniesiono do zakładki "${targetStatus}" w OLX Live!`);
+            showToast(`Przeniesiono pomyślnie do "${targetStatus}"!`);
             fetchMarketAverages();
         } catch (err) {
-            alert("Błąd podczas przenoszenia okazji: " + err.message);
+            showToast("Błąd podczas przenoszenia okazji");
         }
     }
 
@@ -368,8 +407,9 @@
             }
             const card = document.getElementById(`offer-${idToDelete}`);
             if (card) card.remove();
+            showToast("Usunięto ogłoszenie trwale");
         } catch (err) {
-            alert("Błąd: " + err.message);
+            showToast("Błąd podczas usuwania");
         }
     };
 
@@ -467,7 +507,7 @@
             input.value = '';
             loadComments(selectedOfferId);
         } catch (err) {
-            alert("Błąd wysyłania komentarza: " + err.message);
+            showToast("Błąd wysyłania komentarza");
         }
     }
 
