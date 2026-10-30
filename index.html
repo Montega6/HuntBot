@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HuntBot panel</title>
-    <!-- Supabase oraz biblioteka bcryptjs -->
+    <!-- Oficjalna biblioteka Supabase przez CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
     <style>
         :root {
             --bg-body: #0e1118;
@@ -426,6 +425,14 @@
     let isRegisterMode = false;
     let currentUser = null;
 
+    // Funkcja szyfrująca hasło za pomocą Web Crypto API (SHA-256)
+    async function hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
     function toggleMobileSidebar() {
         document.getElementById('sidebar').classList.toggle('mobile-open');
         document.getElementById('sidebarOverlay').classList.toggle('mobile-open');
@@ -477,13 +484,9 @@
         const password = document.getElementById('authPassword').value.trim();
         if (!username || !password) return;
 
-        // Bezpieczne sprawdzenie czy bcrypt się załadował
-        if (typeof bcrypt === 'undefined') {
-            alert("Trwa ładowanie biblioteki bezpieczeństwa. Spróbuj ponownie za 2 sekundy.");
-            return;
-        }
-
         try {
+            const hashedPassword = await hashPassword(password);
+
             if (isRegisterMode) {
                 const { data: existing } = await _supabase.from('users').select('*').eq('username', username).single();
                 if (existing) {
@@ -491,35 +494,23 @@
                     return;
                 }
 
-                bcrypt.hash(password, 10, async (err, hashedPassword) => {
-                    if (err) {
-                        alert("Błąd szyfrowania hasła");
-                        return;
-                    }
-                    const { error } = await _supabase.from('users').insert([{
-                        username: username, password: hashedPassword, role: 'Brak subskrypcji'
-                    }]);
-                    if (error) throw error;
+                const { error } = await _supabase.from('users').insert([{
+                    username: username, password: hashedPassword, role: 'Brak subskrypcji'
+                }]);
+                if (error) throw error;
 
-                    alert("Zarejestrowano pomyślnie! Możesz się teraz zalogować.");
-                    toggleAuthMode();
-                });
+                alert("Zarejestrowano pomyślnie! Możesz się teraz zalogować.");
+                toggleAuthMode();
             } else {
-                const { data, error } = await _supabase.from('users').select('*').eq('username', username).single();
+                const { data, error } = await _supabase.from('users').select('*').eq('username', username).eq('password', hashedPassword).single();
                 if (error || !data) {
                     alert("Błędna nazwa użytkownika lub hasło!");
                     return;
                 }
 
-                bcrypt.compare(password, data.password, async (err, res) => {
-                    if (res) {
-                        currentUser = await checkUserRoleExpiration(data);
-                        localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
-                        initSession();
-                    } else {
-                        alert("Błędna nazwa użytkownika lub hasło!");
-                    }
-                });
+                currentUser = await checkUserRoleExpiration(data);
+                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                initSession();
             }
         } catch (err) {
             alert("Błąd autoryzacji: " + err.message);
