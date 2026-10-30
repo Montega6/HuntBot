@@ -27,7 +27,7 @@
             --bg-main: #f8fafc;
             --bg-container: #ffffff;
             --bg-card: #f1f5f9;
-            --border-color: #e2e8f0;
+            --border-color: #e2e2e8;
             --text-main: #1e293b;
             --text-muted: #475569;
             --text-dimmed: #64748b;
@@ -63,12 +63,6 @@
         .menu-btn { background: none; border: none; color: var(--text-muted); padding: 16px 24px; text-align: left; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .menu-btn:hover { background-color: var(--border-color); color: var(--text-main); }
         .menu-btn.active { background-color: var(--accent); color: #fff; font-weight: bold; }
-        
-        .submenu { display: none; flex-direction: column; background-color: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); }
-        .submenu.open { display: flex; }
-        .submenu-btn { background: none; border: none; color: var(--text-muted); padding: 12px 24px 12px 40px; text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; width: 100%; }
-        .submenu-btn:hover { color: var(--text-main); background-color: var(--border-color); }
-        .submenu-btn.active { color: #818cf8; font-weight: bold; }
 
         .user-panel-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border-color); background: var(--bg-card); display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
         .logout-btn { background: #ef4444; color: #fff; border: none; padding: 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
@@ -100,8 +94,6 @@
         }
         .btn-primary { background-color: var(--accent); }
         .btn-primary:hover { background-color: var(--accent-hover); }
-        .btn-danger { background-color: #ef4444; }
-        .btn-danger:hover { background-color: #dc2626; }
         
         #customToast {
             position: fixed;
@@ -220,7 +212,7 @@
     </div>
 
     <div class="main-content">
-        <!-- 1. Zakładka: Tablica Społeczności (Pomysły użytkowników) -->
+        <!-- 1. Zakładka: Tablica Społeczności -->
         <div id="tab-community" class="tab-content active">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -360,7 +352,7 @@
             </div>
         </div>
 
-        <!-- 4. Zakładka: Panel Administratora (Zarządzanie użytkownikami) -->
+        <!-- 4. Zakładka: Panel Administratora -->
         <div id="tab-admin" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -373,7 +365,7 @@
             </div>
             <div class="chat-container" style="padding: 20px; overflow-y: auto;">
                 <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 12px;">
-                    <p style="color: var(--text-muted);">Pobieranie listy użytkowników...</p>
+                    <p style="color: var(--text-muted);">Pobieranie użytkowników...</p>
                 </div>
             </div>
         </div>
@@ -576,13 +568,12 @@
         }
     }
 
-    // Tablica społeczności
+    // Tablica społeczności (korzysta teraz z tabeli 'ideas')
     async function fetchCommunityIdeas() {
         const container = document.getElementById('communityIdeasContainer');
         container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ładowanie pomysłów...</p>';
         try {
-            // Używamy tabeli 'offers' jako uniwersalnej bazy wpisów lub symulujemy dane
-            const { data, error } = await _supabase.from('offers').select('*').order('id', { ascending: false });
+            const { data, error } = await _supabase.from('ideas').select('*').order('id', { ascending: false });
             if (error) throw error;
 
             container.innerHTML = '';
@@ -620,7 +611,7 @@
         }
 
         try {
-            const { error } = await _supabase.from('offers').insert([{
+            const { error } = await _supabase.from('ideas').insert([{
                 title: title,
                 source: category,
                 description: currentUser.username,
