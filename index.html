@@ -120,6 +120,24 @@
 
         /* Styl kontenera tabeli cen z możliwością rozwijania */
         .prices-wrapper { display: flex; flex-direction: column; gap: 8px; padding: 20px; overflow-y: auto; }
+
+        /* Przycisk akcji dodawania okazjonalnego */
+        .mini-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #fff;
+            transition: 0.2s;
+        }
+        .mini-btn-nowe { background-color: #0284c7; }
+        .mini-btn-nowe:hover { background-color: #0369a1; }
+        .mini-btn-trakcie { background-color: #f59e0b; }
+        .mini-btn-trakcie:hover { background-color: #d97706; }
+        .mini-btn-odrzucone { background-color: #ef4444; }
+        .mini-btn-odrzucone:hover { background-color: #dc2626; }
         
         /* Własne okienko GUI (Modal) na środku ekranu */
         .modal-overlay {
@@ -201,7 +219,7 @@
             </div>
         </div>
 
-        <!-- 2. Podzakładka: Średnie ceny Iphone (Z rozwijanymi okazjami) -->
+        <!-- 2. Podzakładka: Średnie ceny Iphone (Z rozwijanymi okazjami i przyciskami) -->
         <div id="tab-prices" class="tab-content">
             <div class="top-bar">
                 <h2>Analiza średnich cen rynkowych iPhone (OLX)</h2>
@@ -244,13 +262,11 @@
     let currentCategory = 'nowe'; 
     let offerToDeleteId = null;
 
-    // Rozwijanie/zwijanie menu głównego z podzakładkami
     function toggleIphoneMenu() {
         const submenu = document.getElementById('iphoneSubmenu');
         submenu.classList.toggle('open');
     }
 
-    // Przełączanie między głównymi widokami (Live / Średnie ceny)
     function switchTab(tabName, event) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.submenu-btn').forEach(btn => btn.classList.remove('active'));
@@ -259,7 +275,7 @@
             document.getElementById('tab-live').classList.add('active');
         } else if (tabName === 'prices') {
             document.getElementById('tab-prices').classList.add('active');
-            fetchMarketAverages(); // Pobieranie średnich cen przy wejściu w zakładkę
+            fetchMarketAverages();
         }
 
         if (event && event.target) {
@@ -267,7 +283,6 @@
         }
     }
 
-    // Przełączanie motywu (Ciemny / Jasny)
     function toggleTheme() {
         const body = document.body;
         const themeIcon = document.getElementById('themeIcon');
@@ -284,7 +299,6 @@
         }
     }
 
-    // Zmiana aktywnej zakładki statusów w OLX Live
     function switchCategory(category, event) {
         currentCategory = category;
         document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
@@ -294,7 +308,6 @@
         fetchFilteredData();
     }
 
-    // Aktualizacja statusu ogłoszenia w bazie Supabase
     async function updateOfferStatus(offerId, newStatus) {
         try {
             const { error } = await _supabase
@@ -315,19 +328,39 @@
         }
     }
 
-    // Otwieranie własnego modalu potwierdzenia
+    // Funkcja do ręcznego przesyłania konkretnej okazji ze średnich cen do 'OLX Live'
+    async function sendDealToLive(title, price, url, targetStatus) {
+        try {
+            const { error } = await _supabase
+                .from('offers')
+                .insert([
+                    {
+                        title: title,
+                        price: price,
+                        url: url,
+                        status: targetStatus,
+                        source: "OLX Hunter",
+                        description: `Dodano ręcznie z zakładki Średnie Ceny (${price} zł)`
+                    }
+                ]);
+
+            if (error) throw error;
+            alert(`✅ Pomyślnie dodano okazję do zakladki "${targetStatus}" w OLX Live!`);
+        } catch (err) {
+            alert("Błąd dodawania do OLX Live: " + err.message);
+        }
+    }
+
     function promptDeleteOffer(offerId) {
         offerToDeleteId = offerId;
         document.getElementById('confirmModal').classList.add('active');
     }
 
-    // Zamykanie modalu
     function closeModal() {
         offerToDeleteId = null;
         document.getElementById('confirmModal').classList.remove('active');
     }
 
-    // Obsługa kliknięcia przycisku "Usuń trwale" wewnątrz modalu
     document.getElementById('modalConfirmBtn').onclick = async function() {
         if (!offerToDeleteId) return;
         const idToDelete = offerToDeleteId;
@@ -352,7 +385,6 @@
         }
     };
 
-    // Generator widoku karty ogłoszenia
     function createCardElement(offer) {
         const card = document.createElement('div');
         card.className = 'message-card';
@@ -392,7 +424,6 @@
         return card;
     }
 
-    // Pobieranie przefiltrowanych danych ogłoszeń z Supabase
     async function fetchFilteredData() {
         container.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Wczytywanie...</p>`;
         try {
@@ -422,7 +453,6 @@
         }
     }
 
-    // Pobieranie średnich cen rynkowych z tabeli 'market_averages' i obsługa rozwijanych okazji
     async function fetchMarketAverages() {
         const wrapper = document.getElementById('pricesTableBody');
         wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie aktualnych średnich cen...</p>';
@@ -437,7 +467,7 @@
 
             wrapper.innerHTML = '';
             if (!data || data.length === 0) {
-                wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Brak zaktualizowanych średnich cen. Użyj wtyczki Tampermonkey na OLX.</p>';
+                wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Brak zaktualizowanych średnich cen.</p>';
                 return;
             }
 
@@ -447,16 +477,26 @@
                 
                 let dealsListHtml = '';
                 if (dealsCount > 0) {
-                    dealsListHtml = deals.map(d => `
-                        <div style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                            <a href="${d.link}" target="_blank" style="color: #38ef7d; text-decoration: none; font-weight: 500;">
+                    dealsListHtml = deals.map(d => {
+                        // Bezpieczne kodowanie ciągów do funkcji onclick
+                        const safeTitle = d.title.replace(/'/g, "\\'");
+                        const safeLink = d.link.replace(/'/g, "\\'");
+
+                        return `
+                        <div style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                            <a href="${d.link}" target="_blank" style="color: #38ef7d; text-decoration: none; font-weight: 500; font-size: 13px; flex: 1; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                                 🔗 ${d.title}
                             </a>
-                            <span style="color: #fff; font-weight: bold; background: #11998e; padding: 3px 8px; border-radius: 4px;">
+                            <span style="color: #fff; font-weight: bold; background: #11998e; padding: 2px 6px; border-radius: 4px; font-size: 13px;">
                                 ${d.price} zł
                             </span>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="mini-btn mini-btn-nowe" title="Dodaj do Nowe" onclick="sendDealToLive('${safeTitle}', ${d.price}, '${safeLink}', 'nowe')">🔥 Nowe</button>
+                                <button class="mini-btn mini-btn-trakcie" title="Dodaj do W trakcie" onclick="sendDealToLive('${safeTitle}', ${d.price}, '${safeLink}', 'w trakcie')">⏳ W trakcie</button>
+                                <button class="mini-btn mini-btn-odrzucone" title="Dodaj do Odrzucone" onclick="sendDealToLive('${safeTitle}', ${d.price}, '${safeLink}', 'odrzucone')">❌ Odrzuć</button>
+                            </div>
                         </div>
-                    `).join('');
+                    `}).join('');
                 } else {
                     dealsListHtml = `<div style="padding: 10px; color: var(--text-muted); font-size: 13px;">Brak ofert tańszych o co najmniej 100 zł od średniej w ostatnim skanie.</div>`;
                 }
@@ -481,7 +521,7 @@
                         </summary>
                         <div style="background: rgba(0,0,0,0.2); padding: 12px; border-top: 1px solid var(--border-color);">
                             <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">
-                                Oferty tańsze o min. 100 zł od średniej (${item.avg_price ? item.avg_price - 100 : 0} zł lub mniej):
+                                Wybierz status, aby dodać okazję do zakładki <b>OLX Live</b>:
                             </div>
                             ${dealsListHtml}
                         </div>
@@ -495,7 +535,6 @@
         }
     }
 
-    // Subskrypcja zdarzeń na żywo (Realtime)
     function subscribeToRealtime() {
         _supabase
             .channel('public:offers')
@@ -509,7 +548,6 @@
             .subscribe();
     }
 
-    // Start
     fetchFilteredData();
     subscribeToRealtime();
 </script>
