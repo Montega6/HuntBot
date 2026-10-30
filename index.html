@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HuntBot panel</title>
+    <title>ReelsAI Hub - Panel</title>
     <!-- Oficjalna biblioteka Supabase przez CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -17,8 +17,8 @@
             --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --text-dimmed: #64748b;
-            --accent: #0284c7;
-            --accent-hover: #0369a1;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
         }
 
         [data-theme="light"] {
@@ -27,12 +27,12 @@
             --bg-main: #f8fafc;
             --bg-container: #ffffff;
             --bg-card: #f1f5f9;
-            --border-color: #e2e2e8;
+            --border-color: #e2e8f0;
             --text-main: #1e293b;
             --text-muted: #475569;
             --text-dimmed: #64748b;
-            --accent: #0284c7;
-            --accent-hover: #0369a1;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color 0.2s, color 0.2s; }
@@ -49,15 +49,15 @@
             background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 12px;
             padding: 32px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 16px;
         }
-        .auth-title { font-size: 22px; font-weight: bold; color: #38bdf8; text-align: center; margin-bottom: 8px; }
+        .auth-title { font-size: 22px; font-weight: bold; color: #818cf8; text-align: center; margin-bottom: 8px; }
         .auth-input { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 14px; width: 100%; }
         .auth-btn { background-color: var(--accent); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
         .auth-btn:hover { background-color: var(--accent-hover); }
         .auth-switch { text-align: center; font-size: 13px; color: var(--text-muted); cursor: pointer; margin-top: 4px; }
-        .auth-switch:hover { color: #38bdf8; text-decoration: underline; }
+        .auth-switch:hover { color: #818cf8; text-decoration: underline; }
 
         .sidebar { width: 280px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border-color); z-index: 100; transition: transform 0.3s ease; }
-        .logo { padding: 24px; font-size: 20px; font-weight: bold; color: #38bdf8; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .logo { padding: 24px; font-size: 20px; font-weight: bold; color: #818cf8; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
         
         .menu-group { display: flex; flex-direction: column; }
         .menu-btn { background: none; border: none; color: var(--text-muted); padding: 16px 24px; text-align: left; font-size: 16px; cursor: pointer; transition: 0.2s; width: 100%; display: flex; justify-content: space-between; align-items: center; }
@@ -68,7 +68,7 @@
         .submenu.open { display: flex; }
         .submenu-btn { background: none; border: none; color: var(--text-muted); padding: 12px 24px 12px 40px; text-align: left; font-size: 14px; cursor: pointer; transition: 0.2s; width: 100%; }
         .submenu-btn:hover { color: var(--text-main); background-color: var(--border-color); }
-        .submenu-btn.active { color: #38bdf8; font-weight: bold; }
+        .submenu-btn.active { color: #818cf8; font-weight: bold; }
 
         .user-panel-footer { margin-top: auto; padding: 16px; border-top: 1px solid var(--border-color); background: var(--bg-card); display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
         .logout-btn { background: #ef4444; color: #fff; border: none; padding: 6px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; }
@@ -85,59 +85,12 @@
         .tab-content { display: none; padding: 24px; flex-direction: column; height: 100%; overflow-y: auto; }
         .tab-content.active { display: flex; }
         
-        .category-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; overflow-x: auto; }
-        .cat-btn { background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; }
-        .cat-btn:hover { background-color: var(--border-color); color: var(--text-main); }
-        .cat-btn.active { background-color: var(--accent); color: #fff; border-color: var(--accent); }
-
-        .live-layout { display: flex; gap: 20px; flex: 1; overflow: hidden; }
-        .listings-column { flex: 1; display: flex; flex-direction: column; overflow-y: auto; gap: 12px; padding-right: 4px; }
-        .chat-sidebar-column { width: 380px; background-color: var(--bg-container); border: 1px solid var(--border-color); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-
         .chat-container { flex: 1; background-color: var(--bg-container); border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; overflow: hidden; }
         
-        .message-card { 
-            background-color: var(--bg-card); 
-            border-left: 4px solid #38bdf8; 
-            padding: 16px; 
-            border-radius: 0 8px 8px 0; 
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            border-top: 1px solid var(--border-color);
-            border-right: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
-            transition: 0.2s;
-        }
-        .message-card:hover { border-color: #38bdf8; }
-        .message-card.selected { border-left-color: #22c55e; background-color: rgba(34, 197, 94, 0.05); }
-
-        .card-header { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dimmed); align-items: center; }
-        .card-title { font-size: 16px; font-weight: bold; color: var(--text-main); }
-        .card-price { font-size: 18px; color: #22c55e; font-weight: bold; }
-        .card-link { color: #38bdf8; font-size: 14px; text-decoration: none; }
-        .card-link:hover { text-decoration: underline; }
-
-        .card-actions { display: flex; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-color); flex-wrap: wrap; }
-        .action-btn { padding: 6px 12px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        .btn-progress { background-color: #f59e0b; color: #fff; }
-        .btn-progress:hover { background-color: #d97706; }
-        .btn-reject { background-color: #ef4444; color: #fff; }
-        .btn-reject:hover { background-color: #dc2626; }
-        .btn-restore { background-color: var(--accent); color: #fff; }
-        .btn-restore:hover { background-color: var(--accent-hover); }
-        .btn-delete { background-color: var(--text-dimmed); color: #fff; }
-        .btn-delete:hover { background-color: var(--text-muted); }
-
-        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: var(--accent); color: #fff; }
-
-        .prices-wrapper { display: flex; flex-direction: column; gap: 8px; padding: 20px; overflow-y: auto; }
-
         .mini-btn {
-            padding: 4px 10px;
+            padding: 6px 12px;
             font-size: 12px;
-            border-radius: 4px;
+            border-radius: 6px;
             border: none;
             cursor: pointer;
             font-weight: 600;
@@ -145,32 +98,11 @@
             transition: 0.2s;
             white-space: nowrap;
         }
-        .mini-btn-nowe { background-color: #0284c7; }
-        .mini-btn-nowe:hover { background-color: #0369a1; }
-        .mini-btn-trakcie { background-color: #f59e0b; }
-        .mini-btn-trakcie:hover { background-color: #d97706; }
-        .mini-btn-odrzucone { background-color: #ef4444; }
-        .mini-btn-odrzucone:hover { background-color: #dc2626; }
+        .btn-primary { background-color: var(--accent); }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-danger { background-color: #ef4444; }
+        .btn-danger:hover { background-color: #dc2626; }
         
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; padding: 16px;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-box {
-            background-color: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 12px;
-            padding: 24px; width: 100%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-        }
-        .modal-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin-bottom: 10px; }
-        .modal-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
-        .modal-actions { display: flex; gap: 12px; justify-content: center; }
-        .modal-btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
-        .modal-btn-cancel { background-color: var(--border-color); color: var(--text-muted); }
-        .modal-btn-confirm { background-color: #ef4444; color: #fff; }
-
         #customToast {
             position: fixed;
             top: 30px;
@@ -234,29 +166,10 @@
                 top: 0; left: 0; height: 100%;
                 transform: translateX(-100%);
             }
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            .sidebar-overlay.mobile-open {
-                display: block;
-            }
-            .live-layout {
-                flex-direction: column;
-                overflow-y: auto;
-            }
-            .listings-column {
-                overflow-y: visible;
-            }
-            .chat-sidebar-column {
-                width: 100%;
-                min-height: 300px;
-            }
-            .tab-content {
-                padding: 16px;
-            }
-            .top-bar h2 {
-                font-size: 18px;
-            }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .sidebar-overlay.mobile-open { display: block; }
+            .tab-content { padding: 16px; }
+            .top-bar h2 { font-size: 18px; }
         }
     </style>
 </head>
@@ -266,7 +179,7 @@
     <!-- Ekran logowania / rejestracji -->
     <div id="authScreen">
         <div class="auth-card">
-            <div class="auth-title" id="authTitle">🎯 Logowanie do HuntBot</div>
+            <div class="auth-title" id="authTitle">🚀 Logowanie do ReelsAI Hub</div>
             <form id="authForm" onsubmit="handleAuth(event)" style="display: flex; flex-direction: column; gap: 12px;">
                 <input type="text" id="authUsername" placeholder="Nazwa użytkownika" class="auth-input" required>
                 <input type="password" id="authPassword" placeholder="Hasło" class="auth-input" required>
@@ -280,29 +193,26 @@
 
     <div class="sidebar" id="sidebar">
         <div class="logo">
-            <span>🎯 HuntBot Panel</span>
+            <span>🚀 ReelsAI Hub</span>
         </div>
         
         <div class="menu-group">
-            <button class="menu-btn active" id="mainMenuBtn" onclick="toggleIphoneMenu()">
-                <span>📱 Bot iPhone (OLX)</span> <span>▼</span>
+            <button class="menu-btn active" onclick="switchTab('community', event)">
+                <span>💡 Tablica Społeczności</span>
             </button>
-            <div class="submenu open" id="iphoneSubmenu">
-                <button class="submenu-btn active" onclick="switchTab('live', event)">🔴 OLX Live</button>
-                <button class="submenu-btn" onclick="switchTab('prices', event)">📊 Średnie ceny Iphone</button>
-                <button class="submenu-btn" onclick="switchTab('reels', event)">🎬 Generator Reels</button>
-            </div>
-            <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="toggleAdminMenu()">
-                <span>⚙️ Panel Administratora</span> <span>▼</span>
+            <button class="menu-btn" onclick="switchTab('generator', event)">
+                <span>🤖 Generator AI Reels</span>
             </button>
-            <div class="submenu" id="adminSubmenu">
-                <button class="submenu-btn" id="adminUsersSubBtn" onclick="switchTab('admin-users', event)">👥 Użytkownicy</button>
-                <button class="submenu-btn" id="adminLinksSubBtn" onclick="switchTab('admin-links', event)">🔗 Linki OLX</button>
-            </div>
+            <button class="menu-btn" onclick="switchTab('publish', event)">
+                <span>📤 Eksport / YouTube Shorts</span>
+            </button>
+            <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="switchTab('admin', event)">
+                <span>⚙️ Panel Administratora</span>
+            </button>
         </div>
 
         <div class="user-panel-footer">
-            <div>Zalogowany: <strong id="loggedUsername" style="color: #38bdf8;">-</strong></div>
+            <div>Zalogowany: <strong id="loggedUsername" style="color: #818cf8;">-</strong></div>
             <div>Ranga: <span id="loggedUserRole" style="color: #f59e0b; font-weight: bold;">-</span></div>
             <div id="loggedUserExpiry" style="font-size: 11px; color: var(--text-dimmed);"></div>
             <button class="logout-btn" onclick="logoutUser()">Wyloguj się</button>
@@ -310,147 +220,152 @@
     </div>
 
     <div class="main-content">
-        <!-- 1. Zakładka główna: OLX Live -->
-        <div id="tab-live" class="tab-content active">
+        <!-- 1. Zakładka: Tablica Społeczności (Pomysły użytkowników) -->
+        <div id="tab-community" class="tab-content active">
             <div class="top-bar">
                 <div class="top-bar-left">
                     <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>Wyszukiwarka okazyjnych iPhone'ów</h2>
+                    <h2>💡 Tablica Pomysłów i Inspiracji Społeczności</h2>
                 </div>
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">
+                <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span id="themeIcon">☀️</span> <span id="themeText">Tryb jasny</span>
                 </button>
             </div>
 
-            <div id="tab-live-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
-                <div class="category-tabs">
-                    <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
-                    <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
-                    <button class="cat-btn" onclick="switchCategory('odrzucone', event)">❌ Odrzucone</button>
-                </div>
-
-                <!-- Panel masowych akcji dla listy ofert -->
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-muted);">
-                        <input type="checkbox" id="selectAllOffersCheckbox" onclick="toggleSelectAllOffers(this)" style="width: 16px; height: 16px; cursor: pointer;">
-                        Zaznacz wszystkie widoczne
-                    </label>
-                    <div id="bulkActionsButtons" style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <!-- Dynamicznie generowane przyciski masowe -->
+            <div id="tab-community-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 16px;">
+                <!-- Formularz dodawania własnego pomysłu -->
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+                    <h3 style="font-size: 16px; color: #818cf8;">✨ Podziel się swoim pomysłem na viralowy Reel</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="newIdeaTitle" placeholder="Tytuł / Główny motyw (np. Jak oszczędziłem w miesiąc 2000 zł)" class="auth-input" style="flex: 2; min-width: 250px;">
+                        <select id="newIdeaCategory" class="auth-input" style="flex: 1; min-width: 150px;">
+                            <option value="Finanse / Biznes">Finanse / Biznes</option>
+                            <option value="Lifestyle / Motywacja">Lifestyle / Motywacja</option>
+                            <option value="Ciekawostki / Tech">Ciekawostki / Tech</option>
+                            <option value="Humor / Relatable">Humor / Relatable</option>
+                        </select>
+                        <button onclick="addCommunityIdea()" class="mini-btn btn-primary" style="padding: 10px 20px; font-size: 14px;">Opublikuj pomysł</button>
                     </div>
                 </div>
 
-                <div class="live-layout">
-                    <div id="listingsColumn" class="listings-column">
-                        <p style="color: var(--text-muted); text-align: center;">Ładowanie ofert...</p>
-                    </div>
-                    
-                    <div class="chat-sidebar-column">
-                        <div style="padding: 14px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 14px; color: #38bdf8;">
-                            💬 Notatki / Chat oferty
-                        </div>
-                        <div id="offerChatMessages" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-                            <span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej, aby zobaczyć i dodać komentarze.</span>
-                        </div>
-                        <div id="offerChatInputArea" style="padding: 10px; border-top: 1px solid var(--border-color); display: none; gap: 8px;">
-                            <input type="text" id="commentInput" placeholder="Napisz komentarz..." style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 13px;" onkeypress="if(event.key==='Enter') sendComment()">
-                            <button onclick="sendComment()" style="background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Wyślij</button>
-                        </div>
+                <!-- Lista pomysłów społeczności -->
+                <div class="chat-container" style="padding: 16px; overflow-y: auto;">
+                    <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 12px;">Top pomysły od subskrybentów</h3>
+                    <div id="communityIdeasContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                        <p style="color: var(--text-muted); text-align: center;">Ładowanie pomysłów...</p>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-live-nosub" class="no-subscription-box" style="display: none;">
+            <div id="tab-community-nosub" class="no-subscription-box" style="display: none;">
                 <div class="no-sub-icon">🔒</div>
                 <div class="no-sub-title">Brak aktywnej subskrypcji</div>
-                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
+                <div class="no-sub-desc">Wykup miesięczny dostęp do ReelsAI Hub, aby korzystać z tablicy pomysłów i generatora.</div>
             </div>
         </div>
 
-        <!-- 2. Podzakładka: Średnie ceny Iphone -->
-        <div id="tab-prices" class="tab-content">
+        <!-- 2. Zakładka: Generator AI Reels -->
+        <div id="tab-generator" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
                     <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2 id="marketDateTitle">Analiza średnich cen rynkowych iPhone (OLX)</h2>
-                </div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()">
-                    <span>☀️</span> <span>Tryb jasny</span>
-                </button>
-            </div>
-            
-            <div id="tab-prices-content" class="chat-container" style="overflow-y: auto;">
-                <div id="pricesTableBody" class="prices-wrapper">
-                    <p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie danych rynkowych...</p>
-                </div>
-            </div>
-
-            <div id="tab-prices-nosub" class="no-subscription-box" style="display: none;">
-                <div class="no-sub-icon">🔒</div>
-                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
-                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
-            </div>
-        </div>
-
-        <!-- 3. Nowa Zakładka: Generator Reels / TikTok -->
-        <div id="tab-reels" class="tab-content">
-            <div class="top-bar">
-                <div class="top-bar-left">
-                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>🎬 Generator Viralowych Reelsów i TikToków</h2>
+                    <h2>🤖 Generator AI Reels & TikToków</h2>
                 </div>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span>☀️</span> <span>Tryb jasny</span>
                 </button>
             </div>
 
-            <div id="tab-reels-content" class="chat-container" style="padding: 24px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
+            <div id="tab-generator-content" class="chat-container" style="padding: 24px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px;">
-                    <h3 style="font-size: 16px; color: #38bdf8;">⚡ Stwórz scenariusz w sekundę</h3>
+                    <h3 style="font-size: 16px; color: #818cf8;">⚡ Stwórz viralowy scenariusz jednym kliknięciem</h3>
                     
                     <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="font-size: 13px; color: var(--text-muted);">Główny temat / Produkt / Okazja:</label>
-                        <input type="text" id="reelsTopic" placeholder="np. iPhone 15 w Warszawie za 1300 zł lub Jak nie dać się oszukać na OLX" class="auth-input" style="max-width: 100%;">
+                        <label style="font-size: 13px; color: var(--text-muted);">O czym ma być wideo? (Słowa kluczowe lub temat):</label>
+                        <input type="text" id="genTopic" placeholder="np. 3 nawyki ludzi, którzy szybko się bogacą" class="auth-input">
                     </div>
 
                     <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 6px;">
-                            <label style="font-size: 13px; color: var(--text-muted);">Styl / Format:</label>
-                            <select id="reelsStyle" class="auth-input">
-                                <option value="deal">🔥 Szybka okazja / Łowca cen</option>
-                                <option value="warning">🚨 Ostrzeżenie / Jak nie dać się oszukać</option>
-                                <option value="story">📖 Opowieść / Jak to zrobiłem</option>
-                                <option value="secret">🤫 Sekret branży / Mądrość</option>
+                            <label style="font-size: 13px; color: var(--text-muted);">Styl narracji:</label>
+                            <select id="genStyle" class="auth-input">
+                                <option value="shock">🔥 Kontrowersyjny / Szokujący haczyk</option>
+                                <option value="tips">💡 Praktyczna wiedza / Wskazówki</option>
+                                <option value="story">📖 Opowieść osobista (Storytelling)</option>
+                                <option value="secret">🤫 Sekret ukryty przed masami</option>
                             </select>
                         </div>
                     </div>
 
-                    <button onclick="generateReelsScript()" class="mini-btn mini-btn-nowe" style="padding: 12px 20px; font-size: 15px; font-weight: bold; align-self: flex-start;">Generuj scenariusz 🚀</button>
+                    <button onclick="runAiGenerator()" class="mini-btn btn-primary" style="padding: 12px 20px; font-size: 15px; font-weight: bold; align-self: flex-start;">Generuj scenariusz AI 🚀</button>
                 </div>
 
-                <!-- Wynik generowania -->
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-size: 16px; color: var(--text-main);">📋 Twój gotowy scenariusz</h3>
-                        <button onclick="copyReelsScript()" class="mini-btn" style="background: var(--accent); padding: 6px 12px;">Kopiuj do schowka 📋</button>
+                        <h3 style="font-size: 16px; color: var(--text-main);">📋 Wygenerowany scenariusz</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="copyGeneratorOutput()" class="mini-btn btn-primary">Kopiuj tekst 📋</button>
+                            <button onclick="sendToPublish()" class="mini-btn" style="background: #22c55e;">Wyślij do Eksportu ➡️</button>
+                        </div>
                     </div>
-                    <textarea id="reelsOutput" readonly placeholder="Tutaj pojawi się wygenerowany scenariusz (Hook, Treść, CTA i hashtagi)..." style="width: 100%; height: 260px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px; border-radius: 6px; font-size: 14px; resize: vertical; line-height: 1.5;"></textarea>
+                    <textarea id="genOutput" readonly placeholder="Tutaj pojawi się gotowy scenariusz (Hook, Treść, CTA i hashtagi)..." style="width: 100%; height: 240px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px; border-radius: 6px; font-size: 14px; resize: vertical; line-height: 1.5;"></textarea>
                 </div>
             </div>
 
-            <div id="tab-reels-nosub" class="no-subscription-box" style="display: none;">
+            <div id="tab-generator-nosub" class="no-subscription-box" style="display: none;">
                 <div class="no-sub-icon">🔒</div>
                 <div class="no-sub-title">Brak aktywnej subskrypcji</div>
-                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
+                <div class="no-sub-desc">Wykup miesięczny dostęp, aby odblokować Generator AI.</div>
             </div>
         </div>
 
-        <!-- 4. Zakładka: Panel Administratora - Użytkownicy -->
-        <div id="tab-admin-users" class="tab-content">
+        <!-- 3. Zakładka: Eksport / YouTube Shorts -->
+        <div id="tab-publish" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
                     <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>Zarządzanie użytkownikami</h2>
+                    <h2>📤 Studio Publikacji i Eksportu na YouTube Shorts</h2>
+                </div>
+                <button class="theme-toggle-btn" onclick="toggleTheme()">
+                    <span>☀️</span> <span>Tryb jasny</span>
+                </button>
+            </div>
+
+            <div id="tab-publish-content" class="chat-container" style="padding: 24px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px;">
+                    <h3 style="font-size: 16px; color: #818cf8;">🎬 Przygotowanie pliku wideo do wysłania</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">Skopiowany lub wygenerowany scenariusz możesz przekształcić w gotowe pionowe wideo 9:16 i opublikować na YouTube, by generować wyświetlenia.</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; color: var(--text-muted);">Tytuł rolki na YouTube:</label>
+                        <input type="text" id="pubTitle" placeholder="np. Szybki sposób na sukces #shorts" class="auth-input">
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; color: var(--text-muted);">Treść scenariusza / Opis:</label>
+                        <textarea id="pubDescription" placeholder="Wklej tutaj swój scenariusz..." style="width: 100%; height: 120px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 6px; font-size: 13px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button onclick="simulateVideoRender()" class="mini-btn btn-primary" style="padding: 12px 20px;">Renderuj wideo 9:16 🎞️</button>
+                        <button onclick="publishToYouTube()" class="mini-btn" style="background: #ef4444; padding: 12px 20px;">Udostępnij bezpośrednio na YouTube Shorts 🔴</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-publish-nosub" class="no-subscription-box" style="display: none;">
+                <div class="no-sub-icon">🔒</div>
+                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
+                <div class="no-sub-desc">Wykup miesięczny dostęp, aby korzystać ze studia publikacji.</div>
+            </div>
+        </div>
+
+        <!-- 4. Zakładka: Panel Administratora (Zarządzanie użytkownikami) -->
+        <div id="tab-admin" class="tab-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+                    <h2>⚙️ Panel Administratora - Zarządzanie Subskrypcjami</h2>
                 </div>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span>☀️</span> <span>Tryb jasny</span>
@@ -460,49 +375,6 @@
                 <div id="adminUsersList" style="display: flex; flex-direction: column; gap: 12px;">
                     <p style="color: var(--text-muted);">Pobieranie listy użytkowników...</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- 5. Zakładka: Panel Administratora - Linki OLX -->
-        <div id="tab-admin-links" class="tab-content">
-            <div class="top-bar">
-                <div class="top-bar-left">
-                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>🔗 Szybkie linki do przefiltrowanych wyszukiwań OLX</h2>
-                </div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()">
-                    <span>☀️</span> <span>Tryb jasny</span>
-                </button>
-            </div>
-            <div class="chat-container" style="padding: 20px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
-                <!-- Formularz dodawania linku -->
-                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
-                    <h3 style="font-size: 16px; color: #38bdf8;">➕ Dodaj nowy link pomocniczy</h3>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" id="newLinkName" placeholder="Nazwa (np. iPhone 15 Warszawa Używane)" class="auth-input" style="flex: 1; min-width: 250px;">
-                        <input type="url" id="newLinkUrl" placeholder="Wklej link z OLX (https://...)" class="auth-input" style="flex: 2; min-width: 300px;">
-                        <button onclick="addHelperLink()" class="mini-btn mini-btn-nowe" style="padding: 10px 20px; font-size: 14px;">Dodaj link</button>
-                    </div>
-                </div>
-
-                <!-- Lista linków -->
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <h3 style="font-size: 16px; color: var(--text-main);">Twoje linki</h3>
-                    <div id="helperLinksContainer" style="display: flex; flex-direction: column; gap: 8px;">
-                        <!-- Generowane dynamicznie -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="confirmModal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-title">Potwierdź usunięcie</div>
-            <div class="modal-desc" id="modalDescText">Czy na pewno chcesz trwale usunąć to ogłoszenie? Tej operacji nie można cofnąć.</div>
-            <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Anuluj</button>
-                <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">Usuń trwale</button>
             </div>
         </div>
     </div>
@@ -517,13 +389,6 @@
         global: { headers: { 'apikey': SUPABASE_KEY } }
     });
 
-    const listingsContainer = document.getElementById('listingsColumn');
-    let currentCategory = 'nowe'; 
-    let offerToDeleteId = null;
-    let isBulkDeleteAction = false;
-    let selectedOfferId = null;
-    let currentMarketData = [];
-    const openDetailsModels = new Set();
     let isRegisterMode = false;
     let currentUser = null;
 
@@ -545,13 +410,13 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-        const savedUser = localStorage.getItem('huntbot_user');
+        const savedUser = localStorage.getItem('reels_user');
         if (savedUser) {
             const parsed = JSON.parse(savedUser);
             const { data } = await _supabase.from('users').select('*').eq('id', parsed.id).single();
             if (data) {
                 currentUser = await checkUserRoleExpiration(data);
-                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                localStorage.setItem('reels_user', JSON.stringify(currentUser));
             } else {
                 currentUser = parsed;
             }
@@ -574,7 +439,7 @@
 
     function toggleAuthMode() {
         isRegisterMode = !isRegisterMode;
-        document.getElementById('authTitle').textContent = isRegisterMode ? "📝 Rejestracja w HuntBot" : "🎯 Logowanie do HuntBot";
+        document.getElementById('authTitle').textContent = isRegisterMode ? "📝 Rejestracja w ReelsAI" : "🚀 Logowanie do ReelsAI";
         document.getElementById('authSubmitBtn').textContent = isRegisterMode ? "Zarejestruj się" : "Zaloguj się";
         document.getElementById('authSwitchText').textContent = isRegisterMode ? "Masz już konto? Zaloguj się" : "Nie masz konta? Zarejestruj się";
     }
@@ -610,7 +475,7 @@
                 }
 
                 currentUser = await checkUserRoleExpiration(data);
-                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                localStorage.setItem('reels_user', JSON.stringify(currentUser));
                 initSession();
             }
         } catch (err) {
@@ -641,11 +506,11 @@
             document.getElementById('adminMenuBtn').style.display = 'none';
         }
 
-        switchTab('live');
+        switchTab('community');
     }
 
     function logoutUser() {
-        localStorage.removeItem('huntbot_user');
+        localStorage.removeItem('reels_user');
         currentUser = null;
         window.location.reload();
     }
@@ -660,67 +525,45 @@
         }, 2500);
     }
 
-    function toggleIphoneMenu() {
-        document.getElementById('iphoneSubmenu').classList.toggle('open');
-    }
-
-    function toggleAdminMenu() {
-        document.getElementById('adminSubmenu').classList.toggle('open');
-    }
-
     function switchTab(tabName, event) {
         closeMobileSidebar();
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.submenu-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.menu-btn').forEach(btn => {
-            if(btn.id !== 'mainMenuBtn' && btn.id !== 'adminMenuBtn') btn.classList.remove('active');
-        });
+        document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
 
         const canAccess = hasActiveSubscription();
 
-        if (tabName === 'live') {
-            document.getElementById('tab-live').classList.add('active');
+        if (tabName === 'community') {
+            document.getElementById('tab-community').classList.add('active');
             if (canAccess) {
-                document.getElementById('tab-live-content').style.display = 'flex';
-                document.getElementById('tab-live-nosub').style.display = 'none';
-                fetchFilteredData();
+                document.getElementById('tab-community-content').style.display = 'flex';
+                document.getElementById('tab-community-nosub').style.display = 'none';
+                fetchCommunityIdeas();
             } else {
-                document.getElementById('tab-live-content').style.display = 'none';
-                document.getElementById('tab-live-nosub').style.display = 'flex';
+                document.getElementById('tab-community-content').style.display = 'none';
+                document.getElementById('tab-community-nosub').style.display = 'flex';
             }
-        } else if (tabName === 'prices') {
-            document.getElementById('tab-prices').classList.add('active');
-            const today = new Date().toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            document.getElementById('marketDateTitle').textContent = `Analiza średnich cen rynkowych iPhone (OLX) - ${today}`;
+        } else if (tabName === 'generator') {
+            document.getElementById('tab-generator').classList.add('active');
             if (canAccess) {
-                document.getElementById('tab-prices-content').style.display = 'flex';
-                document.getElementById('tab-prices-nosub').style.display = 'none';
-                fetchMarketAverages();
+                document.getElementById('tab-generator-content').style.display = 'flex';
+                document.getElementById('tab-generator-nosub').style.display = 'none';
             } else {
-                document.getElementById('tab-prices-content').style.display = 'none';
-                document.getElementById('tab-prices-nosub').style.display = 'flex';
+                document.getElementById('tab-generator-content').style.display = 'none';
+                document.getElementById('tab-generator-nosub').style.display = 'flex';
             }
-        } else if (tabName === 'reels') {
-            document.getElementById('tab-reels').classList.add('active');
+        } else if (tabName === 'publish') {
+            document.getElementById('tab-publish').classList.add('active');
             if (canAccess) {
-                document.getElementById('tab-reels-content').style.display = 'flex';
-                document.getElementById('tab-reels-nosub').style.display = 'none';
+                document.getElementById('tab-publish-content').style.display = 'flex';
+                document.getElementById('tab-publish-nosub').style.display = 'none';
             } else {
-                document.getElementById('tab-reels-content').style.display = 'none';
-                document.getElementById('tab-reels-nosub').style.display = 'flex';
+                document.getElementById('tab-publish-content').style.display = 'none';
+                document.getElementById('tab-publish-nosub').style.display = 'flex';
             }
-        } else if (tabName === 'admin-users') {
+        } else if (tabName === 'admin') {
             if (currentUser && currentUser.role === 'Administrator') {
-                document.getElementById('tab-admin-users').classList.add('active');
+                document.getElementById('tab-admin').classList.add('active');
                 fetchAdminUsers();
-            } else {
-                showToast("Brak uprawnień administratora!");
-                return;
-            }
-        } else if (tabName === 'admin-links') {
-            if (currentUser && currentUser.role === 'Administrator') {
-                document.getElementById('tab-admin-links').classList.add('active');
-                renderHelperLinks();
             } else {
                 showToast("Brak uprawnień administratora!");
                 return;
@@ -728,128 +571,153 @@
         }
 
         if (event && event.target) {
-            if (event.target.classList.contains('submenu-btn') || event.target.classList.contains('menu-btn')) {
-                event.target.classList.add('active');
-            }
+            let btn = event.target.closest('.menu-btn');
+            if (btn) btn.classList.add('active');
         }
     }
 
-    // Generator Reels / TikTok
-    function generateReelsScript() {
-        const topic = document.getElementById('reelsTopic').value.trim() || "iPhone w super okazji";
-        const style = document.getElementById('reelsStyle').value;
-        const output = document.getElementById('reelsOutput');
+    // Tablica społeczności
+    async function fetchCommunityIdeas() {
+        const container = document.getElementById('communityIdeasContainer');
+        container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ładowanie pomysłów...</p>';
+        try {
+            // Używamy tabeli 'offers' jako uniwersalnej bazy wpisów lub symulujemy dane
+            const { data, error } = await _supabase.from('offers').select('*').order('id', { ascending: false });
+            if (error) throw error;
+
+            container.innerHTML = '';
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Brak pomysłów. Dodaj swój pierwszy pomysł powyżej!</p>';
+                return;
+            }
+
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.style.cssText = "background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;";
+                div.innerHTML = `
+                    <div style="flex: 1; min-width: 250px;">
+                        <div style="font-weight: bold; font-size: 15px; color: var(--text-main); margin-bottom: 4px;">${item.title}</div>
+                        <div style="font-size: 12px; color: #818cf8;">Kategoria: ${item.source || 'Ogólne'} | Autor: ${item.description || 'Społeczność'}</div>
+                    </div>
+                    <button onclick="loadIdeaIntoGenerator('${item.title.replace(/'/g, "\\'")}')" class="mini-btn btn-primary">Użyj w Generatorze 🚀</button>
+                `;
+                container.appendChild(div);
+            });
+        } catch (err) {
+            container.innerHTML = `<p style="color: #ef4444; text-align: center;">Błąd ładowania pomysłów: ${err.message}</p>`;
+        }
+    }
+
+    async function addCommunityIdea() {
+        const titleInput = document.getElementById('newIdeaTitle');
+        const catSelect = document.getElementById('newIdeaCategory');
+        const title = titleInput.value.trim();
+        const category = catSelect.value;
+
+        if (!title) {
+            showToast("Wpisz treść pomysłu!");
+            return;
+        }
+
+        try {
+            const { error } = await _supabase.from('offers').insert([{
+                title: title,
+                source: category,
+                description: currentUser.username,
+                status: 'community'
+            }]);
+            if (error) throw error;
+
+            titleInput.value = '';
+            showToast("Opublikowano pomysł na tablicy!");
+            fetchCommunityIdeas();
+        } catch (err) {
+            showToast("Błąd publikacji: " + err.message);
+        }
+    }
+
+    function loadIdeaIntoGenerator(title) {
+        document.getElementById('genTopic').value = title;
+        switchTab('generator');
+        showToast("Załadowano pomysł do generatora AI!");
+    }
+
+    // Generator AI Reels
+    function runAiGenerator() {
+        const topic = document.getElementById('genTopic').value.trim() || "Jak osiągnąć sukces";
+        const style = document.getElementById('genStyle').value;
+        const output = document.getElementById('genOutput');
 
         let hook = "";
         let body = "";
         let cta = "";
 
-        if (style === 'deal') {
-            hook = `🔥 Znalazłem absolutną perełkę: ${topic}! Lepszej oferty w tym tygodniu nie zobaczysz.`;
-            body = `Ludzie przepłacają w sklepach, a wystarczy wiedzieć, gdzie szukać. Ten egzemplarz jest w super stanie, bateria trzyma świetnie, a cena jest niższa o kilkaset złotych od rynkowej średniej. Z takimi okazjami trzeba działać w kilka minut, bo zanim inni zauważą, ogłoszenie znika.`;
-            cta = `Zapisz tę rolkę na później i zaobserwuj profil po codzienne, sprawdzone okazje!`;
-        } else if (style === 'warning') {
-            hook = `🚨 Uważaj na to, jeśli szukasz w sieci ${topic}! Prawie straciłem przez to pieniądze.`;
-            body = `Oto 3 najczęstsze błędy i próby oszustwa, na które natkniesz się dzisiaj w ogłoszeniach. Po pierwsze – żądanie zaliczki. Po drugie – podejrzanie niska cena bez dowodu zakupu. Zawsze sprawdzaj historię sprzedającego i odbieraj osobiście, jeśli to możliwe.`;
-            cta = `Wyślij ten film znajomemu, który też poluje na okazyjne zakupy!`;
+        if (style === 'shock') {
+            hook = `🚨 Większość ludzi robi ten jeden błąd w ${topic} i tracą przez to tysiące!`;
+            body = `Oto brutalna prawda, której nikt Ci nie powie. Zamiast marnować czas na przestarzałe metody, spójrz na to z zupełnie innej perspektywy. Wystarczy zaledwie 7 dni, aby całkowicie odmienić podejście i zacząć zauważyć realne efekty.`;
+            cta = `Zapisz tę rolkę, żeby nie zapomnieć, i zaobserwuj po codzienne wskazówki!`;
+        } else if (style === 'tips') {
+            hook = `3 szybkie triki dotyczące ${topic}, które musisz poznać dzisiaj!`;
+            body = `Numer jeden: zacznij od małych kroków. Numer dwa: eliminuj to, co rozprasza. Numer trzy: bądź systematyczny. Te proste zasady sprawiły, że najlepsi w branży osiągnęli spektakularne wyniki bez wydawania fortuny.`;
+            cta = `Wyślij ten film znajomemu, któremu też się to przyda!`;
         } else if (style === 'story') {
-            hook = `Wszyscy mówili mi, że ${topic} to ściema... Do dzisiaj.`;
-            body = `Kiedy zobaczyłem tę ofertę, myślałem, że to kolejny fejk. Ryzykowałem, sprawdziłem szczegóły i... okazało się, że sprzedający po prostu potrzebował gotówki na już. To dowodzi, że cierpliwość i szybki refleks w łowieniu okazji naprawdę się opłacają.`;
-            cta = `Napisz w komentarzu "OKAZJA", a wyślę Ci link do narzędzia, z którego korzystam!`;
+            hook = `Kiedy zaczynałem z ${topic}, nikt we mnie nie wierzył...`;
+            body = `Wszyscy mówili mi, że to nie ma sensu. Popełniłem mnóstwo kosztownych błędów, zanim znalazłem ten jeden złoty klucz. Dziś dzielę się tym z Tobą, żebyś oszczędził miesiące bezowocnych poszukiwań.`;
+            cta = `Napisz w komentarzu "START", a wyślę Ci pełny poradnik!`;
         } else {
-            hook = `🤫 Prosty sekret handlarzy, o którym nikt Ci głośno nie powie na temat: ${topic}.`;
-            body = `Wszyscy patrzą tylko na cenę, a prawdziwy zysk tkwi w detalach i kondycji sprzętu. Jeśli wiesz, na co patrzeć, możesz kupić coś taniej, doprowadzić do stanu idealnego i odsprzedać z dużym zyskiem albo zostawić dla siebie ułamek ceny.`;
-            cta = `Zaobserwuj po codzienne kulisy handlu i unikalną wiedzę!`;
+            hook = `🤫 Strzeżony sekret, który zmienia wszystko w temacie: ${topic}.`;
+            body = `Wielcy graczi trzymają to w tajemnicy, bo daje im to ogromną przewagę. Kiedy poznasz ten mechanizm, codzienne działania staną się proste, a zasięgi i wyniki wystrzelą w górę.`;
+            cta = `Zaobserwuj profil, żeby nie ominąć kolejnych sekretów!`;
         }
 
-        const fullScript = `🎬 SCENARIUSZ NA REELS / TIKTOK\n\n[0:00 - 0:03] HOOK (Haczyk):\n"${hook}"\n\n[0:03 - 0:20] TREŚĆ:\n${body}\n\n[0:20 - 0:30] WEZWANIE DO DZIAŁANIA (CTA):\n"${cta}"\n\n📌 HASHTAGI:\n#okazja #okazjecenowe #promocja #handeltelefonami #sprzedaz #wskazówki #${topic.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
-
-        output.value = fullScript;
-        showToast("Wygenerowano pomyślnie scenariusz!");
+        output.value = `🎬 GOTOWY SCENARIUSZ AI REELS:\n\n[0:00 - 0:03] HOOK:\n"${hook}"\n\n[0:03 - 0:25] TREŚĆ:\n${body}\n\n[0:25 - 0:30] CTA:\n"${cta}"\n\n📌 HASHTAGI:\n#shorts #viral #reels #rozwojosobisty #biznes #wskazówki`;
+        showToast("Wygenerowano scenariusz AI!");
     }
 
-    function copyReelsScript() {
-        const output = document.getElementById('reelsOutput');
+    function copyGeneratorOutput() {
+        const output = document.getElementById('genOutput');
         if (!output.value) {
             showToast("Najpierw wygeneruj scenariusz!");
             return;
         }
         output.select();
         document.execCommand('copy');
-        showToast("Skopiowano scenariusz do schowka!");
+        showToast("Skopiowano do schowka!");
     }
 
-    // Zarządzanie linkami pomocniczymi w localStorage
-    function getHelperLinks() {
-        const saved = localStorage.getItem('huntbot_helper_links');
-        if (saved) {
-            try { return JSON.parse(saved); } catch(e) { return []; }
-        }
-        return [
-            { id: 1, name: "iPhone 15 Warszawa (Używane)", url: "https://www.olx.pl/elektronika/telefony/smartfony-telefony-komorkowe/iphone/warszawa/?search%5Bfilter_enum_phonemodel%5D%5B0%5D=iphone-15&search%5Bfilter_enum_state%5D%5B0%5D=used&search%5Border%5D=created_at%3Adesc" }
-        ];
-    }
-
-    function saveHelperLinks(links) {
-        localStorage.setItem('huntbot_helper_links', JSON.stringify(links));
-    }
-
-    function renderHelperLinks() {
-        const container = document.getElementById('helperLinksContainer');
-        const links = getHelperLinks();
-        container.innerHTML = '';
-
-        if (links.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-muted); font-size: 14px;">Brak zapisanych linków. Dodaj swój pierwszy link powyżej.</p>';
+    function sendToPublish() {
+        const text = document.getElementById('genOutput').value;
+        if (!text) {
+            showToast("Brak tekstu do wyeksportowania!");
             return;
         }
-
-        links.forEach(item => {
-            const div = document.createElement('div');
-            div.style.cssText = "background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;";
-            div.innerHTML = `
-                <div style="flex: 1; min-width: 250px; overflow: hidden;">
-                    <div style="font-weight: bold; font-size: 15px; color: var(--text-main); margin-bottom: 4px;">${item.name}</div>
-                    <a href="${item.url}" target="_blank" style="color: #38bdf8; font-size: 12px; text-decoration: none; word-break: break-all;">🔗 ${item.url}</a>
-                </div>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <a href="${item.url}" target="_blank" class="mini-btn mini-btn-nowe" style="text-decoration: none; display: inline-flex; align-items: center; padding: 6px 12px;">Otwórz OLX ↗</a>
-                    <button onclick="deleteHelperLink(${item.id})" class="mini-btn mini-btn-odrzucone" style="padding: 6px 10px;">Usuń</button>
-                </div>
-            `;
-            container.appendChild(div);
-        });
+        document.getElementById('pubDescription').value = text;
+        document.getElementById('pubTitle').value = "Viralowy Reel #shorts";
+        switchTab('publish');
+        showToast("Przeniesiono do studia publikacji!");
     }
 
-    function addHelperLink() {
-        const nameInput = document.getElementById('newLinkName');
-        const urlInput = document.getElementById('newLinkUrl');
-        const name = nameInput.value.trim();
-        const url = urlInput.value.trim();
+    // Publikacja YouTube
+    function simulateVideoRender() {
+        showToast("🎞️ Renderowanie pionowego wideo 9:16 w toku...");
+        setTimeout(() => {
+            showToast("✅ Wideo wyrenderowane pomyślnie! Gotowe do publikacji.");
+        }, 2000);
+    }
 
-        if (!name || !url) {
-            showToast("Wypełnij nazwę oraz adres URL!");
+    function publishToYouTube() {
+        const title = document.getElementById('pubTitle').value;
+        if (!title) {
+            showToast("Wprowadź tytuł rolki!");
             return;
         }
-
-        const links = getHelperLinks();
-        links.push({ id: Date.now(), name, url });
-        saveHelperLinks(links);
-
-        nameInput.value = '';
-        urlInput.value = '';
-        renderHelperLinks();
-        showToast("Dodano nowy link pomocniczy!");
+        showToast("🚀 Przesyłanie materiału na YouTube Shorts...");
+        setTimeout(() => {
+            showToast("🎉 Opublikowano pomyślnie na YouTube Shorts! Zbieraj wyświetlenia!");
+        }, 2500);
     }
 
-    function deleteHelperLink(id) {
-        let links = getHelperLinks();
-        links = links.filter(l => l.id !== id);
-        saveHelperLinks(links);
-        renderHelperLinks();
-        showToast("Usunięto link.");
-    }
-
+    // Panel Admina
     async function fetchAdminUsers() {
         const adminBox = document.getElementById('adminUsersList');
         adminBox.innerHTML = '<p style="color: var(--text-muted);">Pobieranie użytkowników...</p>';
@@ -882,15 +750,12 @@
                             <option value="Subskrypcja" ${u.role === 'Subskrypcja' ? 'selected' : ''}>Subskrypcja</option>
                             <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
                         </select>
-
                         <select id="time-type-${u.id}" onchange="toggleDaysInput(${u.id})" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
                             <option value="forever">Na stałe</option>
                             <option value="days">Na dni</option>
                         </select>
-
                         <input type="number" id="days-input-${u.id}" placeholder="Dni" min="1" value="30" style="display: none; width: 65px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
-
-                        <button onclick="updateUserRole(${u.id})" class="mini-btn mini-btn-nowe" style="padding: 6px 12px;">Zapisz</button>
+                        <button onclick="updateUserRole(${u.id})" class="mini-btn btn-primary" style="padding: 6px 12px;">Zapisz</button>
                     </div>
                 `;
                 adminBox.appendChild(div);
@@ -925,12 +790,12 @@
             }).eq('id', userId);
 
             if (error) throw error;
-            showToast("Zaktualizowano rangę i czas!");
+            showToast("Zaktualizowano rangę użytkownika!");
             
             if (currentUser && currentUser.id === userId) {
                 currentUser.role = newRole;
                 currentUser.role_expires_at = expiresAt;
-                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                localStorage.setItem('reels_user', JSON.stringify(currentUser));
                 initSession();
             }
 
@@ -953,461 +818,6 @@
             body.setAttribute('data-theme', 'dark');
             if(themeIcon) themeIcon.textContent = '☀️';
             if(themeText) themeText.textContent = 'Tryb jasny';
-        }
-    }
-
-    function switchCategory(category, event) {
-        currentCategory = category;
-        document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
-        if (event && event.target) event.target.classList.add('active');
-        document.getElementById('selectAllOffersCheckbox').checked = false;
-        selectedOfferId = null;
-        document.getElementById('offerChatMessages').innerHTML = `<span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej, aby zobaczyć i dodać komentarze.</span>`;
-        document.getElementById('offerChatInputArea').style.display = 'none';
-        
-        updateBulkActionsBar();
-        fetchFilteredData();
-    }
-
-    function updateBulkActionsBar() {
-        const bulkContainer = document.getElementById('bulkActionsButtons');
-        let buttonsHtml = '';
-
-        if (currentCategory !== 'nowe') {
-            buttonsHtml += `<button class="mini-btn mini-btn-nowe" onclick="bulkUpdateOffers('nowe')">🔥 Przenieś do Nowe</button>`;
-        }
-        if (currentCategory !== 'w trakcie') {
-            buttonsHtml += `<button class="mini-btn mini-btn-trakcie" onclick="bulkUpdateOffers('w trakcie')">⏳ Przenieś do W trakcie</button>`;
-        }
-        if (currentCategory !== 'odrzucone') {
-            buttonsHtml += `<button class="mini-btn mini-btn-odrzucone" onclick="bulkUpdateOffers('odrzucone')">❌ Przenieś do Odrzucone</button>`;
-        }
-        if (currentCategory === 'odrzucone') {
-            buttonsHtml += `<button class="mini-btn" style="background: #ef4444;" onclick="bulkDeleteOffers()">🗑️ Usuń zaznaczone</button>`;
-        }
-
-        bulkContainer.innerHTML = buttonsHtml;
-    }
-
-    function toggleSelectAllOffers(masterCheckbox) {
-        const checkboxes = document.querySelectorAll('.offer-checkbox');
-        checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
-    }
-
-    async function bulkUpdateOffers(targetStatus) {
-        const checkboxes = document.querySelectorAll('.offer-checkbox:checked');
-        if (checkboxes.length === 0) {
-            showToast("Zaznacz przynajmniej jedną ofertę!");
-            return;
-        }
-
-        const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-
-        try {
-            const { error } = await _supabase.from('offers').update({ status: targetStatus }).in('id', ids);
-            if (error) throw error;
-
-            showToast(`Przeniesiono ${ids.length} ofert do "${targetStatus}"!`);
-            document.getElementById('selectAllOffersCheckbox').checked = false;
-            fetchFilteredData();
-        } catch (err) {
-            showToast("Błąd masowej zmiany statusu: " + err.message);
-        }
-    }
-
-    function bulkDeleteOffers() {
-        const checkboxes = document.querySelectorAll('.offer-checkbox:checked');
-        if (checkboxes.length === 0) {
-            showToast("Zaznacz przynajmniej jedną ofertę!");
-            return;
-        }
-        isBulkDeleteAction = true;
-        document.getElementById('modalDescText').textContent = `Czy na pewno chcesz trwale usunąć zaznaczone ogłoszenia (${checkboxes.length} szt.)? Tej operacji nie można cofnąć.`;
-        document.getElementById('confirmModal').classList.add('active');
-    }
-
-    async function updateOfferStatus(offerId, newStatus) {
-        try {
-            const { error } = await _supabase.from('offers').update({ status: newStatus }).eq('id', offerId);
-            if (error) throw error;
-            if (selectedOfferId === offerId) {
-                selectedOfferId = null;
-                document.getElementById('offerChatMessages').innerHTML = `<span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej.</span>`;
-                document.getElementById('offerChatInputArea').style.display = 'none';
-            }
-            const card = document.getElementById(`offer-${offerId}`);
-            if (card) {
-                card.style.opacity = '0';
-                setTimeout(() => card.remove(), 250);
-            }
-            showToast(`Zmieniono status na: ${newStatus}`);
-        } catch (err) {
-            showToast("Błąd: " + err.message);
-        }
-    }
-
-    async function sendDealToLiveAndRemove(modelName, dealIndex, targetStatus, event) {
-        if (event) event.stopPropagation();
-        try {
-            const item = currentMarketData.find(m => m.model === modelName);
-            if (!item) return;
-
-            let dealsList = Array.isArray(item.deals) ? [...item.deals] : [];
-            const deal = dealsList[dealIndex];
-            if (!deal) return;
-
-            const { error: insertError } = await _supabase.from('offers').insert([{
-                title: deal.title, 
-                price: deal.price, 
-                url: deal.link, 
-                status: targetStatus, 
-                source: "OLX Hunter", 
-                description: `Wybrane ze średnich cen (${deal.price} zł)`
-            }]);
-            if (insertError) throw insertError;
-
-            dealsList.splice(dealIndex, 1);
-
-            const { error: updateError } = await _supabase
-                .from('market_averages')
-                .update({ deals: dealsList })
-                .eq('model', modelName);
-                
-            if (updateError) throw updateError;
-
-            openDetailsModels.add(modelName);
-            showToast(`Przeniesiono pomyślnie do "${targetStatus}"!`);
-            fetchMarketAverages();
-        } catch (err) {
-            showToast("Błąd podczas przenoszenia okazji");
-        }
-    }
-
-    async function sendSelectedDealsToLive(modelIndex, targetStatus) {
-        try {
-            const checkboxes = document.querySelectorAll(`.cb-model-${modelIndex}:checked`);
-            
-            if (checkboxes.length === 0) {
-                showToast("Zaznacz przynajmniej jedną ofertę!");
-                return;
-            }
-
-            const item = currentMarketData[modelIndex];
-            if (!item) return;
-
-            let dealsList = Array.isArray(item.deals) ? [...item.deals] : [];
-            const indicesToRemove = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => b - a);
-            const offersToInsert = [];
-
-            indicesToRemove.forEach(index => {
-                const deal = dealsList[index];
-                if (deal) {
-                    offersToInsert.push({
-                        title: deal.title,
-                        price: deal.price,
-                        url: deal.link,
-                        status: targetStatus,
-                        source: "OLX Hunter",
-                        description: `Wybrane ze średnich cen (${deal.price} zł)`
-                    });
-                }
-            });
-
-            const { error: insertError } = await _supabase.from('offers').insert(offersToInsert);
-            if (insertError) throw insertError;
-
-            indicesToRemove.forEach(index => {
-                dealsList.splice(index, 1);
-            });
-
-            const { error: updateError } = await _supabase
-                .from('market_averages')
-                .update({ deals: dealsList })
-                .eq('model', item.model);
-
-            if (updateError) throw updateError;
-
-            openDetailsModels.add(item.model);
-            showToast(`Przeniesiono ${indicesToRemove.length} ofert do "${targetStatus}"!`);
-            fetchMarketAverages();
-        } catch (err) {
-            showToast("Błąd masowego przenoszenia");
-        }
-    }
-
-    function promptDeleteOffer(offerId) {
-        isBulkDeleteAction = false;
-        offerToDeleteId = offerId;
-        document.getElementById('modalDescText').textContent = "Czy na pewno chcesz trwale usunąć to ogłoszenie? Tej operacji nie można cofnąć.";
-        document.getElementById('confirmModal').classList.add('active');
-    }
-
-    function closeModal() {
-        offerToDeleteId = null;
-        isBulkDeleteAction = false;
-        document.getElementById('confirmModal').classList.remove('active');
-    }
-
-    document.getElementById('modalConfirmBtn').onclick = async function() {
-        if (isBulkDeleteAction) {
-            const checkboxes = document.querySelectorAll('.offer-checkbox:checked');
-            const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
-            closeModal();
-            try {
-                const { error } = await _supabase.from('offers').delete().in('id', ids);
-                if (error) throw error;
-                showToast(`Usunięto trwale ${ids.length} ogłoszeń`);
-                document.getElementById('selectAllOffersCheckbox').checked = false;
-                fetchFilteredData();
-            } catch (err) {
-                showToast("Błąd masowego usuwania");
-            }
-        } else if (offerToDeleteId) {
-            const idToDelete = offerToDeleteId;
-            closeModal();
-            try {
-                await _supabase.from('offers').delete().eq('id', idToDelete);
-                if (selectedOfferId === idToDelete) {
-                    selectedOfferId = null;
-                    document.getElementById('offerChatMessages').innerHTML = `<span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej.</span>`;
-                    document.getElementById('offerChatInputArea').style.display = 'none';
-                }
-                const card = document.getElementById(`offer-${idToDelete}`);
-                if (card) card.remove();
-                showToast("Usunięto ogłoszenie trwale");
-            } catch (err) {
-                showToast("Błąd podczas usuwania");
-            }
-        }
-    };
-
-    function createCardElement(offer) {
-        const card = document.createElement('div');
-        card.className = 'message-card' + (selectedOfferId === offer.id ? ' selected' : '');
-        card.id = `offer-${offer.id}`;
-        card.onclick = (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'INPUT') return;
-            selectOffer(offer.id, offer.title);
-        };
-
-        let actionButtons = '';
-        if (currentCategory === 'nowe') {
-            actionButtons = `
-                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'w trakcie')">⏳ W trakcie</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
-            `;
-        } else if (currentCategory === 'w trakcie') {
-            actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowe</button>
-                <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
-            `;
-        } else if (currentCategory === 'odrzucone') {
-            actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowe</button>
-                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'w trakcie')">⏳ W trakcie</button>
-                <button class="action-btn btn-delete" onclick="promptDeleteOffer(${offer.id})">🗑️ Usuń</button>
-            `;
-        }
-
-        card.innerHTML = `
-            <div class="card-header">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" class="offer-checkbox" value="${offer.id}" style="width: 18px; height: 18px; cursor: pointer;">
-                    <span>${offer.source || 'OLX Hunter'}</span>
-                </div>
-                <span class="status-badge">${offer.status || 'nowe'}</span>
-            </div>
-            <div class="card-title">${offer.title || 'Brak tytułu'}</div>
-            <div class="card-price">${offer.price ? offer.price + ' zł' : 'Brak ceny'}</div>
-            <p style="font-size: 13px; color: var(--text-muted);">${offer.description || ''}</p>
-            ${offer.url ? `<a href="${offer.url}" target="_blank" class="card-link" onclick="event.stopPropagation()">🔗 Otwórz ofertę na OLX</a>` : ''}
-            <div class="card-actions">
-                ${actionButtons}
-            </div>
-        `;
-        return card;
-    }
-
-    async function selectOffer(offerId, offerTitle) {
-        selectedOfferId = offerId;
-        document.querySelectorAll('.message-card').forEach(c => c.classList.remove('selected'));
-        const selectedCard = document.getElementById(`offer-${offerId}`);
-        if (selectedCard) selectedCard.classList.add('selected');
-
-        document.getElementById('offerChatInputArea').style.display = 'flex';
-        loadComments(offerId);
-    }
-
-    async function loadComments(offerId) {
-        const chatBox = document.getElementById('offerChatMessages');
-        chatBox.innerHTML = `<span style="color: var(--text-muted); text-align: center;">Ładowanie komentarzy...</span>`;
-        try {
-            const { data, error } = await _supabase.from('offer_comments').select('*').eq('offer_id', offerId).order('created_at', { ascending: true });
-            if (error) throw error;
-
-            chatBox.innerHTML = '';
-            if (!data || data.length === 0) {
-                chatBox.innerHTML = `<span style="color: var(--text-muted); text-align: center; font-size: 12px; margin-top: 10px;">Brak notatek dla tej oferty. Napisz coś poniżej!</span>`;
-                return;
-            }
-
-            data.forEach(c => {
-                const timeStr = new Date(c.created_at).toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'});
-                const div = document.createElement('div');
-                div.style.cssText = "background: var(--bg-card); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 4px;";
-                div.innerHTML = `
-                    <div style="font-size: 12px; color: var(--text-main);">${c.comment}</div>
-                    <div style="font-size: 10px; color: var(--text-dimmed); align-self: flex-end;">${timeStr}</div>
-                `;
-                chatBox.appendChild(div);
-            });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        } catch (err) {
-            chatBox.innerHTML = `<span style="color: #ef4444; text-align: center;">Błąd ładowania notatek</span>`;
-        }
-    }
-
-    async function sendComment() {
-        if (!selectedOfferId) return;
-        const input = document.getElementById('commentInput');
-        const text = input.value.trim();
-        if (!text) return;
-
-        try {
-            const { error } = await _supabase.from('offer_comments').insert([{ offer_id: selectedOfferId, comment: text }]);
-            if (error) throw error;
-            input.value = '';
-            loadComments(selectedOfferId);
-        } catch (err) {
-            showToast("Błąd wysyłania komentarza");
-        }
-    }
-
-    async function fetchFilteredData() {
-        if (!hasActiveSubscription()) return;
-        listingsContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Wczytywanie...</p>`;
-        try {
-            let query = _supabase.from('offers').select('*').order('id', { ascending: false });
-            if (currentCategory === 'nowe') {
-                query = query.or('status.eq.nowe,status.eq.okazja,status.is.null');
-            } else {
-                query = query.eq('status', currentCategory);
-            }
-
-            const { data, error } = await query;
-            if (error) throw error;
-
-            listingsContainer.innerHTML = '';
-            if (!data || data.length === 0) {
-                listingsContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Brak ogłoszeń w tej kategorii.</p>`;
-                return;
-            }
-
-            data.forEach(offer => {
-                listingsContainer.appendChild(createCardElement(offer));
-            });
-        } catch (err) {
-            listingsContainer.innerHTML = `<p style="color: #ef4444; text-align: center;">Błąd: ${err.message}</p>`;
-        }
-    }
-
-    async function fetchMarketAverages() {
-        if (!hasActiveSubscription()) return;
-        const wrapper = document.getElementById('pricesTableBody');
-        wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie aktualnych średnich cen...</p>';
-        
-        try {
-            const { data, error } = await _supabase.from('market_averages').select('*').order('model', { ascending: true });
-            if (error) throw error;
-
-            currentMarketData = data || [];
-            wrapper.innerHTML = '';
-            if (!currentMarketData || currentMarketData.length === 0) {
-                wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Brak zaktualizowanych średnich cen.</p>';
-                return;
-            }
-
-            currentMarketData.forEach((item, modelIndex) => {
-                const deals = Array.isArray(item.deals) ? item.deals : [];
-                const dealsCount = deals.length;
-                
-                let dealsListHtml = '';
-                if (dealsCount > 0) {
-                    const safeModelAttr = item.model.replace(/'/g, "\\'");
-
-                    dealsListHtml += `
-                        <div class="bulk-actions-mobile" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px; border-radius: 4px; flex-wrap: wrap; gap: 8px;">
-                            <span style="font-size: 12px; color: var(--text-muted);">Zaznaczone okazje:</span>
-                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                <button class="mini-btn mini-btn-nowe" onclick="sendSelectedDealsToLive(${modelIndex}, 'nowe')">🔥 Przenieś zaznaczone do Nowe</button>
-                                <button class="mini-btn mini-btn-trakcie" onclick="sendSelectedDealsToLive(${modelIndex}, 'w trakcie')">⏳ Przenieś zaznaczone do W trakcie</button>
-                                <button class="mini-btn mini-btn-odrzucone" onclick="sendSelectedDealsToLive(${modelIndex}, 'odrzucone')">❌ Odrzuć zaznaczone</button>
-                            </div>
-                        </div>
-                    `;
-
-                    dealsListHtml += deals.map((d, index) => {
-                        const safeModel = item.model.replace(/'/g, "\\'");
-
-                        return `
-                        <div class="deal-item-mobile" style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                            <div style="display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden;">
-                                <input type="checkbox" class="cb-model-${modelIndex}" value="${index}" style="cursor: pointer; width: 18px; height: 18px;">
-                                <a href="${d.link}" target="_blank" style="color: #38ef7d; text-decoration: none; font-weight: 500; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                    🔗 ${d.title}
-                                </a>
-                            </div>
-                            <div class="deal-item-actions-mobile" style="display: flex; gap: 6px; align-items: center;">
-                                <span style="color: #fff; font-weight: bold; background: #11998e; padding: 2px 6px; border-radius: 4px; font-size: 13px;">
-                                    ${d.price} zł
-                                </span>
-                                <button class="mini-btn mini-btn-nowe" onclick="sendDealToLiveAndRemove('${safeModel}', ${index}, 'nowe', event)">🔥 Nowe</button>
-                                <button class="mini-btn mini-btn-trakcie" onclick="sendDealToLiveAndRemove('${safeModel}', ${index}, 'w trakcie', event)">⏳ W trakcie</button>
-                                <button class="mini-btn mini-btn-odrzucone" onclick="sendDealToLiveAndRemove('${safeModel}', ${index}, 'odrzucone', event)">❌ Odrzuć</button>
-                            </div>
-                        </div>
-                    `}).join('');
-                } else {
-                    dealsListHtml = `<div style="padding: 10px; color: var(--text-muted); font-size: 13px;">Brak okazji spełniających kryteria.</div>`;
-                }
-
-                let formattedDate = item.updated_at ? new Date(item.updated_at).toLocaleString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Brak danych';
-                const isOpen = openDetailsModels.has(item.model) ? 'open' : '';
-
-                const row = document.createElement('div');
-                row.innerHTML = `
-                    <details ${isOpen} style="background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
-                        <summary style="padding: 14px 20px; cursor: pointer; user-select: none;">
-                            <div class="summary-row-mobile" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                <span style="color: #38bdf8; font-weight: bold; width: 25%;">${item.model}</span>
-                                <span style="color: #22c55e; font-weight: bold; width: 20%;">${item.avg_price ? item.avg_price + ' zł' : 'Brak'}</span>
-                                <span style="color: var(--text-muted); width: 20%;">${item.offers_count || 0} ofert</span>
-                                <span style="color: #f59e0b; font-weight: bold; font-size: 0.9em; width: 15%;">${dealsCount} okazji 🔥</span>
-                                <span style="color: var(--text-dimmed); font-size: 0.85em; width: 20%; text-align: right;">${formattedDate}</span>
-                            </div>
-                        </summary>
-                        <div style="background: rgba(0,0,0,0.2); padding: 12px; border-top: 1px solid var(--border-color);">
-                            <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">
-                                Zaznacz wybrane okazje lub kliknij przycisk przy ofercie:
-                            </div>
-                            ${dealsListHtml}
-                        </div>
-                    </details>
-                `;
-                
-                const detailsEl = row.querySelector('details');
-                detailsEl.ontoggle = () => {
-                    if (detailsEl.open) {
-                        openDetailsModels.add(item.model);
-                    } else {
-                        openDetailsModels.delete(item.model);
-                    }
-                };
-
-                wrapper.appendChild(row);
-            });
-        } catch (err) {
-            wrapper.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 20px;">Błąd: ${err.message}</p>`;
         }
     }
 </script>
