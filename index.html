@@ -233,7 +233,7 @@
         <!-- 2. Podzakładka: Średnie ceny Iphone -->
         <div id="tab-prices" class="tab-content">
             <div class="top-bar">
-                <h2>Analiza średnich cen rynkowych iPhone (OLX)</h2>
+            <h2 id="marketDateTitle">Analiza średnich cen rynkowych iPhone (OLX)</h2>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span>☀️</span> <span>Tryb jasny</span>
                 </button>
@@ -288,11 +288,12 @@
     function toggleIphoneMenu() {
         document.getElementById('iphoneSubmenu').classList.toggle('open');
     }
-
+const today = new Date().toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+document.querySelector('#tab-prices .top-bar h2').textContent = `Analiza średnich cen rynkowych iPhone (OLX) - ${today}`;
     function switchTab(tabName, event) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.submenu-btn').forEach(btn => btn.classList.remove('active'));
-
+    }
         if (tabName === 'live') {
             document.getElementById('tab-live').classList.add('active');
         } else if (tabName === 'prices') {
