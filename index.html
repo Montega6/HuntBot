@@ -208,6 +208,27 @@
             z-index: 90;
         }
 
+        /* Blokada braku subskrypcji */
+        .no-subscription-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            text-align: center;
+            padding: 32px;
+            background: var(--bg-container);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin: auto;
+            max-width: 500px;
+        }
+        .no-sub-icon { font-size: 48px; margin-bottom: 16px; }
+        .no-sub-title { font-size: 20px; font-weight: bold; color: #f59e0b; margin-bottom: 12px; }
+        .no-sub-desc { font-size: 15px; color: var(--text-muted); line-height: 1.5; }
+
         /* RESPONSyWNOŚĆ (MEDIA QUERIES) */
         @media (max-width: 992px) {
             .mobile-menu-toggle { display: block; }
@@ -327,30 +348,40 @@
                     <span id="themeIcon">☀️</span> <span id="themeText">Tryb jasny</span>
                 </button>
             </div>
-            
-            <div class="category-tabs">
-                <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
-                <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
-                <button class="cat-btn" onclick="switchCategory('odrzucone', event)">❌ Odrzucone</button>
+
+            <!-- Widok dla osób z aktywną subskrypcją / admina -->
+            <div id="tab-live-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                <div class="category-tabs">
+                    <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
+                    <button class="cat-btn" onclick="switchCategory('w trakcie', event)">⏳ W trakcie</button>
+                    <button class="cat-btn" onclick="switchCategory('odrzucone', event)">❌ Odrzucone</button>
+                </div>
+
+                <div class="live-layout">
+                    <div id="listingsColumn" class="listings-column">
+                        <p style="color: var(--text-muted); text-align: center;">Ładowanie ofert...</p>
+                    </div>
+                    
+                    <div class="chat-sidebar-column">
+                        <div style="padding: 14px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 14px; color: #38bdf8;">
+                            💬 Notatki / Chat oferty
+                        </div>
+                        <div id="offerChatMessages" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
+                            <span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej, aby zobaczyć i dodać komentarze.</span>
+                        </div>
+                        <div id="offerChatInputArea" style="padding: 10px; border-top: 1px solid var(--border-color); display: none; gap: 8px;">
+                            <input type="text" id="commentInput" placeholder="Napisz komentarz..." style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 13px;" onkeypress="if(event.key==='Enter') sendComment()">
+                            <button onclick="sendComment()" style="background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Wyślij</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="live-layout">
-                <div id="listingsColumn" class="listings-column">
-                    <p style="color: var(--text-muted); text-align: center;">Ładowanie ofert...</p>
-                </div>
-                
-                <div class="chat-sidebar-column">
-                    <div style="padding: 14px; border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 14px; color: #38bdf8;">
-                        💬 Notatki / Chat oferty
-                    </div>
-                    <div id="offerChatMessages" style="flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px;">
-                        <span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej, aby zobaczyć i dodać komentarze.</span>
-                    </div>
-                    <div id="offerChatInputArea" style="padding: 10px; border-top: 1px solid var(--border-color); display: none; gap: 8px;">
-                        <input type="text" id="commentInput" placeholder="Napisz komentarz..." style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 13px;" onkeypress="if(event.key==='Enter') sendComment()">
-                        <button onclick="sendComment()" style="background: var(--accent); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;">Wyślij</button>
-                    </div>
-                </div>
+            <!-- Baner braku subskrypcji dla OLX Live -->
+            <div id="tab-live-nosub" class="no-subscription-box" style="display: none;">
+                <div class="no-sub-icon">🔒</div>
+                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
+                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
             </div>
         </div>
 
@@ -366,10 +397,17 @@
                 </button>
             </div>
             
-            <div class="chat-container" style="overflow-y: auto;">
+            <div id="tab-prices-content" class="chat-container" style="overflow-y: auto;">
                 <div id="pricesTableBody" class="prices-wrapper">
                     <p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie danych rynkowych...</p>
                 </div>
+            </div>
+
+            <!-- Baner braku subskrypcji dla Średnich cen -->
+            <div id="tab-prices-nosub" class="no-subscription-box" style="display: none;">
+                <div class="no-sub-icon">🔒</div>
+                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
+                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
             </div>
         </div>
 
@@ -422,7 +460,6 @@
     let isRegisterMode = false;
     let currentUser = null;
 
-    // Funkcje do obsługi menu mobilnego
     function toggleMobileSidebar() {
         document.getElementById('sidebar').classList.toggle('mobile-open');
         document.getElementById('sidebarOverlay').classList.toggle('mobile-open');
@@ -504,6 +541,10 @@
         }
     }
 
+    function hasActiveSubscription() {
+        return currentUser && (currentUser.role === 'Subskrypcja' || currentUser.role === 'Administrator');
+    }
+
     function initSession() {
         document.getElementById('authScreen').style.display = 'none';
         document.getElementById('loggedUsername').textContent = currentUser.username;
@@ -523,7 +564,7 @@
             document.getElementById('adminMenuBtn').style.display = 'none';
         }
 
-        fetchFilteredData();
+        switchTab('live');
     }
 
     function logoutUser() {
@@ -554,13 +595,30 @@
             if(btn.id !== 'mainMenuBtn') btn.classList.remove('active');
         });
 
+        const canAccess = hasActiveSubscription();
+
         if (tabName === 'live') {
             document.getElementById('tab-live').classList.add('active');
+            if (canAccess) {
+                document.getElementById('tab-live-content').style.display = 'flex';
+                document.getElementById('tab-live-nosub').style.display = 'none';
+                fetchFilteredData();
+            } else {
+                document.getElementById('tab-live-content').style.display = 'none';
+                document.getElementById('tab-live-nosub').style.display = 'flex';
+            }
         } else if (tabName === 'prices') {
             document.getElementById('tab-prices').classList.add('active');
             const today = new Date().toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
             document.getElementById('marketDateTitle').textContent = `Analiza średnich cen rynkowych iPhone (OLX) - ${today}`;
-            fetchMarketAverages();
+            if (canAccess) {
+                document.getElementById('tab-prices-content').style.display = 'flex';
+                document.getElementById('tab-prices-nosub').style.display = 'none';
+                fetchMarketAverages();
+            } else {
+                document.getElementById('tab-prices-content').style.display = 'none';
+                document.getElementById('tab-prices-nosub').style.display = 'flex';
+            }
         } else if (tabName === 'admin') {
             if (currentUser && currentUser.role === 'Administrator') {
                 document.getElementById('tab-admin').classList.add('active');
@@ -932,6 +990,7 @@
     }
 
     async function fetchFilteredData() {
+        if (!hasActiveSubscription()) return;
         listingsContainer.innerHTML = `<p style="color: var(--text-muted); text-align: center;">Wczytywanie...</p>`;
         try {
             let query = _supabase.from('offers').select('*').order('id', { ascending: false });
@@ -959,6 +1018,7 @@
     }
 
     async function fetchMarketAverages() {
+        if (!hasActiveSubscription()) return;
         const wrapper = document.getElementById('pricesTableBody');
         wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie aktualnych średnich cen...</p>';
         
