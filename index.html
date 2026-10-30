@@ -330,11 +330,8 @@
                         <input type="checkbox" id="selectAllOffersCheckbox" onclick="toggleSelectAllOffers(this)" style="width: 16px; height: 16px; cursor: pointer;">
                         Zaznacz wszystkie widoczne
                     </label>
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                        <button class="mini-btn mini-btn-nowe" onclick="bulkUpdateOffers('nowe')">🔥 Przenieś do Nowe</button>
-                        <button class="mini-btn mini-btn-trakcie" onclick="bulkUpdateOffers('w trakcie')">⏳ Przenieś do W trakcie</button>
-                        <button class="mini-btn mini-btn-odrzucone" onclick="bulkUpdateOffers('odrzucone')">❌ Przenieś do Odrzucone</button>
-                        <button class="mini-btn" style="background: #ef4444;" onclick="bulkDeleteOffers()">🗑️ Usuń zaznaczone</button>
+                    <div id="bulkActionsButtons" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                        <!-- Dynamicznie generowane przyciski masowe -->
                     </div>
                 </div>
 
@@ -740,7 +737,29 @@
         selectedOfferId = null;
         document.getElementById('offerChatMessages').innerHTML = `<span style="color: var(--text-muted); text-align: center; margin-top: 20px;">Kliknij dowolną ofertę po lewej, aby zobaczyć i dodać komentarze.</span>`;
         document.getElementById('offerChatInputArea').style.display = 'none';
+        
+        updateBulkActionsBar();
         fetchFilteredData();
+    }
+
+    function updateBulkActionsBar() {
+        const bulkContainer = document.getElementById('bulkActionsButtons');
+        let buttonsHtml = '';
+
+        if (currentCategory !== 'nowe') {
+            buttonsHtml += `<button class="mini-btn mini-btn-nowe" onclick="bulkUpdateOffers('nowe')">🔥 Przenieś do Nowe</button>`;
+        }
+        if (currentCategory !== 'w trakcie') {
+            buttonsHtml += `<button class="mini-btn mini-btn-trakcie" onclick="bulkUpdateOffers('w trakcie')">⏳ Przenieś do W trakcie</button>`;
+        }
+        if (currentCategory !== 'odrzucone') {
+            buttonsHtml += `<button class="mini-btn mini-btn-odrzucone" onclick="bulkUpdateOffers('odrzucone')">❌ Przenieś do Odrzucone</button>`;
+        }
+        if (currentCategory === 'odrzucone') {
+            buttonsHtml += `<button class="mini-btn" style="background: #ef4444;" onclick="bulkDeleteOffers()">🗑️ Usuń zaznaczone</button>`;
+        }
+
+        bulkContainer.innerHTML = buttonsHtml;
     }
 
     function toggleSelectAllOffers(masterCheckbox) {
@@ -952,12 +971,13 @@
             `;
         } else if (currentCategory === 'w trakcie') {
             actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć</button>
+                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowe</button>
                 <button class="action-btn btn-reject" onclick="updateOfferStatus(${offer.id}, 'odrzucone')">❌ Odrzuć</button>
             `;
         } else if (currentCategory === 'odrzucone') {
             actionButtons = `
-                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć</button>
+                <button class="action-btn btn-restore" onclick="updateOfferStatus(${offer.id}, 'nowe')">↩️ Przywróć do Nowe</button>
+                <button class="action-btn btn-progress" onclick="updateOfferStatus(${offer.id}, 'w trakcie')">⏳ W trakcie</button>
                 <button class="action-btn btn-delete" onclick="promptDeleteOffer(${offer.id})">🗑️ Usuń</button>
             `;
         }
