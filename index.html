@@ -118,13 +118,9 @@
 
         .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 12px; background: var(--accent); color: #fff; }
 
-        /* Tabela średnich cen */
-        .prices-table { width: 100%; border-collapse: collapse; text-align: left; }
-        .prices-table th, .prices-table td { padding: 14px 18px; border-bottom: 1px solid var(--border-color); }
-        .prices-table th { background-color: var(--bg-card); color: var(--text-muted); font-size: 14px; text-transform: uppercase; }
-        .prices-table td { font-size: 15px; color: var(--text-main); }
-        .prices-table tr:hover { background-color: var(--bg-card); }
-
+        /* Styl kontenera tabeli cen z możliwością rozwijania */
+        .prices-wrapper { display: flex; flex-direction: column; gap: 8px; padding: 20px; overflow-y: auto; }
+        
         /* Własne okienko GUI (Modal) na środku ekranu */
         .modal-overlay {
             position: fixed;
@@ -205,7 +201,7 @@
             </div>
         </div>
 
-        <!-- 2. Podzakładka: Średnie ceny Iphone -->
+        <!-- 2. Podzakładka: Średnie ceny Iphone (Z rozwijanymi okazjami) -->
         <div id="tab-prices" class="tab-content">
             <div class="top-bar">
                 <h2>Analiza średnich cen rynkowych iPhone (OLX)</h2>
@@ -214,22 +210,10 @@
                 </button>
             </div>
             
-            <div class="chat-container" style="padding: 0; overflow-y: auto;">
-                <table class="prices-table">
-                    <thead>
-                        <tr>
-                            <th>Model</th>
-                            <th>Średnia cena rynkowa</th>
-                            <th>Liczba ofert</th>
-                            <th>Ostatnia aktualizacja</th>
-                        </tr>
-                    </thead>
-                    <tbody id="pricesTableBody">
-                        <tr>
-                            <td colspan="4" style="text-align: center; color: var(--text-muted);">Ładowanie danych rynkowych...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="chat-container" style="overflow-y: auto;">
+                <div id="pricesTableBody" class="prices-wrapper">
+                    <p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie danych rynkowych...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -438,10 +422,10 @@
         }
     }
 
-    // Pobieranie średnich cen rynkowych z tabeli 'market_averages'
+    // Pobieranie średnich cen rynkowych z tabeli 'market_averages' i obsługa rozwijanych okazji
     async function fetchMarketAverages() {
-        const tbody = document.getElementById('pricesTableBody');
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Pobieranie aktualnych średnich cen...</td></tr>';
+        const wrapper = document.getElementById('pricesTableBody');
+        wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Pobieranie aktualnych średnich cen...</p>';
         
         try {
             const { data, error } = await _supabase
@@ -451,39 +435,63 @@
 
             if (error) throw error;
 
-            tbody.innerHTML = '';
+            wrapper.innerHTML = '';
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Brak zaktualizowanych średnich cen. Bot jeszcze nie przeliczył danych.</td></tr>';
+                wrapper.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Brak zaktualizowanych średnich cen. Użyj wtyczki Tampermonkey na OLX.</p>';
                 return;
             }
 
             data.forEach(item => {
-                const tr = document.createElement('tr');
+                const deals = item.deals || [];
+                const dealsCount = deals.length;
                 
-                // Formatowanie daty i godziny aktualizacji (jeśli istnieje)
+                let dealsListHtml = '';
+                if (dealsCount > 0) {
+                    dealsListHtml = deals.map(d => `
+                        <div style="padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                            <a href="${d.link}" target="_blank" style="color: #38ef7d; text-decoration: none; font-weight: 500;">
+                                🔗 ${d.title}
+                            </a>
+                            <span style="color: #fff; font-weight: bold; background: #11998e; padding: 3px 8px; border-radius: 4px;">
+                                ${d.price} zł
+                            </span>
+                        </div>
+                    `).join('');
+                } else {
+                    dealsListHtml = `<div style="padding: 10px; color: var(--text-muted); font-size: 13px;">Brak ofert tańszych o co najmniej 100 zł od średniej w ostatnim skanie.</div>`;
+                }
+
                 let formattedDate = 'Brak danych';
                 if (item.updated_at) {
                     const dateObj = new Date(item.updated_at);
                     formattedDate = dateObj.toLocaleString('pl-PL', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
+                        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
                     });
                 }
 
-                tr.innerHTML = `
-                    <td style="font-weight: bold; color: #38bdf8;">${item.model}</td>
-                    <td style="color: #22c55e; font-weight: bold;">${item.avg_price ? item.avg_price + ' zł' : 'Brak danych'}</td>
-                    <td>${item.offers_count || 0} ofert</td>
-                    <td style="color: var(--text-muted); font-size: 13px;">${formattedDate}</td>
+                const row = document.createElement('div');
+                row.innerHTML = `
+                    <details style="background: var(--bg-card); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <summary style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; cursor: pointer; user-select: none;">
+                            <span style="color: #38bdf8; font-weight: bold; width: 25%;">${item.model}</span>
+                            <span style="color: #22c55e; font-weight: bold; width: 20%;">${item.avg_price ? item.avg_price + ' zł' : 'Brak'}</span>
+                            <span style="color: var(--text-muted); width: 20%;">${item.offers_count || 0} ofert</span>
+                            <span style="color: #f59e0b; font-weight: bold; font-size: 0.9em; width: 15%;">${dealsCount} okazji 🔥</span>
+                            <span style="color: var(--text-dimmed); font-size: 0.85em; width: 20%; text-align: right;">${formattedDate}</span>
+                        </summary>
+                        <div style="background: rgba(0,0,0,0.2); padding: 12px; border-top: 1px solid var(--border-color);">
+                            <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 8px;">
+                                Oferty tańsze o min. 100 zł od średniej (${item.avg_price ? item.avg_price - 100 : 0} zł lub mniej):
+                            </div>
+                            ${dealsListHtml}
+                        </div>
+                    </details>
                 `;
-                tbody.appendChild(tr);
+                wrapper.appendChild(row);
             });
         } catch (err) {
             console.error("Błąd pobierania średnich cen:", err);
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #ef4444;">Błąd: ${err.message}</td></tr>`;
+            wrapper.innerHTML = `<p style="text-align: center; color: #ef4444; padding: 20px;">Błąd: ${err.message}</p>`;
         }
     }
 
