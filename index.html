@@ -27,7 +27,7 @@
             --bg-main: #f8fafc;
             --bg-container: #ffffff;
             --bg-card: #f1f5f9;
-            --border-color: #e2e8f0;
+            --border-color: #e2e2e8;
             --text-main: #1e293b;
             --text-muted: #475569;
             --text-dimmed: #64748b;
@@ -290,6 +290,7 @@
             <div class="submenu open" id="iphoneSubmenu">
                 <button class="submenu-btn active" onclick="switchTab('live', event)">🔴 OLX Live</button>
                 <button class="submenu-btn" onclick="switchTab('prices', event)">📊 Średnie ceny Iphone</button>
+                <button class="submenu-btn" onclick="switchTab('reels', event)">🎬 Generator Reels</button>
             </div>
             <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="toggleAdminMenu()">
                 <span>⚙️ Panel Administratora</span> <span>▼</span>
@@ -391,7 +392,60 @@
             </div>
         </div>
 
-        <!-- 3. Zakładka: Panel Administratora - Użytkownicy -->
+        <!-- 3. Nowa Zakładka: Generator Reels / TikTok -->
+        <div id="tab-reels" class="tab-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+                    <h2>🎬 Generator Viralowych Reelsów i TikToków</h2>
+                </div>
+                <button class="theme-toggle-btn" onclick="toggleTheme()">
+                    <span>☀️</span> <span>Tryb jasny</span>
+                </button>
+            </div>
+
+            <div id="tab-reels-content" class="chat-container" style="padding: 24px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px;">
+                    <h3 style="font-size: 16px; color: #38bdf8;">⚡ Stwórz scenariusz w sekundę</h3>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 13px; color: var(--text-muted);">Główny temat / Produkt / Okazja:</label>
+                        <input type="text" id="reelsTopic" placeholder="np. iPhone 15 w Warszawie za 1300 zł lub Jak nie dać się oszukać na OLX" class="auth-input" style="max-width: 100%;">
+                    </div>
+
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 6px;">
+                            <label style="font-size: 13px; color: var(--text-muted);">Styl / Format:</label>
+                            <select id="reelsStyle" class="auth-input">
+                                <option value="deal">🔥 Szybka okazja / Łowca cen</option>
+                                <option value="warning">🚨 Ostrzeżenie / Jak nie dać się oszukać</option>
+                                <option value="story">📖 Opowieść / Jak to zrobiłem</option>
+                                <option value="secret">🤫 Sekret branży / Mądrość</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="generateReelsScript()" class="mini-btn mini-btn-nowe" style="padding: 12px 20px; font-size: 15px; font-weight: bold; align-self: flex-start;">Generuj scenariusz 🚀</button>
+                </div>
+
+                <!-- Wynik generowania -->
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="font-size: 16px; color: var(--text-main);">📋 Twój gotowy scenariusz</h3>
+                        <button onclick="copyReelsScript()" class="mini-btn" style="background: var(--accent); padding: 6px 12px;">Kopiuj do schowka 📋</button>
+                    </div>
+                    <textarea id="reelsOutput" readonly placeholder="Tutaj pojawi się wygenerowany scenariusz (Hook, Treść, CTA i hashtagi)..." style="width: 100%; height: 260px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px; border-radius: 6px; font-size: 14px; resize: vertical; line-height: 1.5;"></textarea>
+                </div>
+            </div>
+
+            <div id="tab-reels-nosub" class="no-subscription-box" style="display: none;">
+                <div class="no-sub-icon">🔒</div>
+                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
+                <div class="no-sub-desc">Nie posiadasz subskrypcji, zakup ją aby ujrzeć zawartość.</div>
+            </div>
+        </div>
+
+        <!-- 4. Zakładka: Panel Administratora - Użytkownicy -->
         <div id="tab-admin-users" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -409,7 +463,7 @@
             </div>
         </div>
 
-        <!-- 4. Zakładka: Panel Administratora - Linki OLX -->
+        <!-- 5. Zakładka: Panel Administratora - Linki OLX -->
         <div id="tab-admin-links" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -646,6 +700,15 @@
                 document.getElementById('tab-prices-content').style.display = 'none';
                 document.getElementById('tab-prices-nosub').style.display = 'flex';
             }
+        } else if (tabName === 'reels') {
+            document.getElementById('tab-reels').classList.add('active');
+            if (canAccess) {
+                document.getElementById('tab-reels-content').style.display = 'flex';
+                document.getElementById('tab-reels-nosub').style.display = 'none';
+            } else {
+                document.getElementById('tab-reels-content').style.display = 'none';
+                document.getElementById('tab-reels-nosub').style.display = 'flex';
+            }
         } else if (tabName === 'admin-users') {
             if (currentUser && currentUser.role === 'Administrator') {
                 document.getElementById('tab-admin-users').classList.add('active');
@@ -671,13 +734,57 @@
         }
     }
 
+    // Generator Reels / TikTok
+    function generateReelsScript() {
+        const topic = document.getElementById('reelsTopic').value.trim() || "iPhone w super okazji";
+        const style = document.getElementById('reelsStyle').value;
+        const output = document.getElementById('reelsOutput');
+
+        let hook = "";
+        let body = "";
+        let cta = "";
+
+        if (style === 'deal') {
+            hook = `🔥 Znalazłem absolutną perełkę: ${topic}! Lepszej oferty w tym tygodniu nie zobaczysz.`;
+            body = `Ludzie przepłacają w sklepach, a wystarczy wiedzieć, gdzie szukać. Ten egzemplarz jest w super stanie, bateria trzyma świetnie, a cena jest niższa o kilkaset złotych od rynkowej średniej. Z takimi okazjami trzeba działać w kilka minut, bo zanim inni zauważą, ogłoszenie znika.`;
+            cta = `Zapisz tę rolkę na później i zaobserwuj profil po codzienne, sprawdzone okazje!`;
+        } else if (style === 'warning') {
+            hook = `🚨 Uważaj na to, jeśli szukasz w sieci ${topic}! Prawie straciłem przez to pieniądze.`;
+            body = `Oto 3 najczęstsze błędy i próby oszustwa, na które natkniesz się dzisiaj w ogłoszeniach. Po pierwsze – żądanie zaliczki. Po drugie – podejrzanie niska cena bez dowodu zakupu. Zawsze sprawdzaj historię sprzedającego i odbieraj osobiście, jeśli to możliwe.`;
+            cta = `Wyślij ten film znajomemu, który też poluje na okazyjne zakupy!`;
+        } else if (style === 'story') {
+            hook = `Wszyscy mówili mi, że ${topic} to ściema... Do dzisiaj.`;
+            body = `Kiedy zobaczyłem tę ofertę, myślałem, że to kolejny fejk. Ryzykowałem, sprawdziłem szczegóły i... okazało się, że sprzedający po prostu potrzebował gotówki na już. To dowodzi, że cierpliwość i szybki refleks w łowieniu okazji naprawdę się opłacają.`;
+            cta = `Napisz w komentarzu "OKAZJA", a wyślę Ci link do narzędzia, z którego korzystam!`;
+        } else {
+            hook = `🤫 Prosty sekret handlarzy, o którym nikt Ci głośno nie powie na temat: ${topic}.`;
+            body = `Wszyscy patrzą tylko na cenę, a prawdziwy zysk tkwi w detalach i kondycji sprzętu. Jeśli wiesz, na co patrzeć, możesz kupić coś taniej, doprowadzić do stanu idealnego i odsprzedać z dużym zyskiem albo zostawić dla siebie ułamek ceny.`;
+            cta = `Zaobserwuj po codzienne kulisy handlu i unikalną wiedzę!`;
+        }
+
+        const fullScript = `🎬 SCENARIUSZ NA REELS / TIKTOK\n\n[0:00 - 0:03] HOOK (Haczyk):\n"${hook}"\n\n[0:03 - 0:20] TREŚĆ:\n${body}\n\n[0:20 - 0:30] WEZWANIE DO DZIAŁANIA (CTA):\n"${cta}"\n\n📌 HASHTAGI:\n#okazja #okazjecenowe #promocja #handeltelefonami #sprzedaz #wskazówki #${topic.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}`;
+
+        output.value = fullScript;
+        showToast("Wygenerowano pomyślnie scenariusz!");
+    }
+
+    function copyReelsScript() {
+        const output = document.getElementById('reelsOutput');
+        if (!output.value) {
+            showToast("Najpierw wygeneruj scenariusz!");
+            return;
+        }
+        output.select();
+        document.execCommand('copy');
+        showToast("Skopiowano scenariusz do schowka!");
+    }
+
     // Zarządzanie linkami pomocniczymi w localStorage
     function getHelperLinks() {
         const saved = localStorage.getItem('huntbot_helper_links');
         if (saved) {
             try { return JSON.parse(saved); } catch(e) { return []; }
         }
-        // Domyślny link od Ciebie na start
         return [
             { id: 1, name: "iPhone 15 Warszawa (Używane)", url: "https://www.olx.pl/elektronika/telefony/smartfony-telefony-komorkowe/iphone/warszawa/?search%5Bfilter_enum_phonemodel%5D%5B0%5D=iphone-15&search%5Bfilter_enum_state%5D%5B0%5D=used&search%5Border%5D=created_at%3Adesc" }
         ];
