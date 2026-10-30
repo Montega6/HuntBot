@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HuntBot panel</title>
-    <!-- Oficjalna biblioteka Supabase przez CDN -->
+    <!-- Supabase oraz biblioteka bcryptjs do bezpiecznego haszowania haseł -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js"></script>
     <style>
         :root {
             --bg-body: #0e1118;
@@ -208,7 +209,6 @@
             z-index: 90;
         }
 
-        /* Blokada braku subskrypcji */
         .no-subscription-box {
             display: flex;
             flex-direction: column;
@@ -229,7 +229,6 @@
         .no-sub-title { font-size: 20px; font-weight: bold; color: #f59e0b; margin-bottom: 12px; }
         .no-sub-desc { font-size: 15px; color: var(--text-muted); line-height: 1.5; }
 
-        /* RESPONSyWNOŚĆ (MEDIA QUERIES) */
         @media (max-width: 992px) {
             .mobile-menu-toggle { display: block; }
             .sidebar {
@@ -261,37 +260,9 @@
                 font-size: 18px;
             }
         }
-
-        @media (max-width: 600px) {
-            .summary-row-mobile {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 6px;
-            }
-            .summary-row-mobile span {
-                width: 100% !important;
-                text-align: left !important;
-            }
-            .deal-item-mobile {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 8px !important;
-            }
-            .deal-item-actions-mobile {
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-            }
-            .bulk-actions-mobile {
-                flex-direction: column;
-                align-items: flex-start !important;
-                gap: 8px !important;
-            }
-        }
     </style>
 </head>
 <body data-theme="dark">
-    <!-- Overlay do zamykania menu mobilnego -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
     <!-- Ekran logowania / rejestracji -->
@@ -322,7 +293,6 @@
                 <button class="submenu-btn active" onclick="switchTab('live', event)">🔴 OLX Live</button>
                 <button class="submenu-btn" onclick="switchTab('prices', event)">📊 Średnie ceny Iphone</button>
             </div>
-            <!-- Panel Administratora -->
             <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="switchTab('admin', event)">
                 <span>⚙️ Panel Administratora</span>
             </button>
@@ -349,7 +319,6 @@
                 </button>
             </div>
 
-            <!-- Widok dla osób z aktywną subskrypcją / admina -->
             <div id="tab-live-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
                 <div class="category-tabs">
                     <button class="cat-btn active" onclick="switchCategory('nowe', event)">🔥 Nowe</button>
@@ -377,7 +346,6 @@
                 </div>
             </div>
 
-            <!-- Baner braku subskrypcji dla OLX Live -->
             <div id="tab-live-nosub" class="no-subscription-box" style="display: none;">
                 <div class="no-sub-icon">🔒</div>
                 <div class="no-sub-title">Brak aktywnej subskrypcji</div>
@@ -403,7 +371,6 @@
                 </div>
             </div>
 
-            <!-- Baner braku subskrypcji dla Średnich cen -->
             <div id="tab-prices-nosub" class="no-subscription-box" style="display: none;">
                 <div class="no-sub-icon">🔒</div>
                 <div class="no-sub-title">Brak aktywnej subskrypcji</div>
@@ -470,7 +437,6 @@
         document.getElementById('sidebarOverlay').classList.remove('mobile-open');
     }
 
-    // Sprawdzenie i automatyczna weryfikacja daty wygaśnięcia subskrypcji
     window.addEventListener('DOMContentLoaded', async () => {
         const savedUser = localStorage.getItem('huntbot_user');
         if (savedUser) {
@@ -519,22 +485,38 @@
                     alert("Taki użytkownik już istnieje!");
                     return;
                 }
-                const { error } = await _supabase.from('users').insert([{
-                    username: username, password: password, role: 'Brak subskrypcji'
-                }]);
-                if (error) throw error;
 
-                alert("Zarejestrowano pomyślnie! Możesz się teraz zalogować.");
-                toggleAuthMode();
+                // Szyfrowanie hasła przy użyciu bcrypt przed zapisem w bazie
+                bcrypt.hash(password, 10, async (err, hashedPassword) => {
+                    if (err) {
+                        alert("Błąd szyfrowania hasła");
+                        return;
+                    }
+                    const { error } = await _supabase.from('users').insert([{
+                        username: username, password: hashedPassword, role: 'Brak subskrypcji'
+                    }]);
+                    if (error) throw error;
+
+                    alert("Zarejestrowano pomyślnie! Możesz się teraz zalogować.");
+                    toggleAuthMode();
+                });
             } else {
-                const { data, error } = await _supabase.from('users').select('*').eq('username', username).eq('password', password).single();
+                const { data, error } = await _supabase.from('users').select('*').eq('username', username).single();
                 if (error || !data) {
                     alert("Błędna nazwa użytkownika lub hasło!");
                     return;
                 }
-                currentUser = await checkUserRoleExpiration(data);
-                localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
-                initSession();
+
+                // Weryfikacja hasła haszowanego przez bcrypt
+                bcrypt.compare(password, data.password, async (err, res) => {
+                    if (res) {
+                        currentUser = await checkUserRoleExpiration(data);
+                        localStorage.setItem('huntbot_user', JSON.stringify(currentUser));
+                        initSession();
+                    } else {
+                        alert("Błędna nazwa użytkownika lub hasło!");
+                    }
+                });
             }
         } catch (err) {
             alert("Błąd autoryzacji: " + err.message);
@@ -640,7 +622,7 @@
         const adminBox = document.getElementById('adminUsersList');
         adminBox.innerHTML = '<p style="color: var(--text-muted);">Pobieranie użytkowników...</p>';
         try {
-            const { data, error } = await _supabase.from('users').select('*').order('id', { ascending: true });
+            const { data, error } = await _supabase.from('users').select('id, username, role, role_expires_at').order('id', { ascending: true });
             if (error) throw error;
 
             adminBox.innerHTML = '';
