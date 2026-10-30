@@ -568,7 +568,7 @@
         const toastText = document.getElementById('toastText');
         toastText.textContent = message;
         toast.classList.add('show');
-        setTimeout => {
+        setTimeout(function() {
             toast.classList.remove('show');
         }, 2500);
     }
