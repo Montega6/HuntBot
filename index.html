@@ -177,6 +177,30 @@
             border-radius: 4px;
         }
 
+        /* Modal odtwarzacza */
+        #playerModal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .player-modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+        }
+
         @media (max-width: 992px) {
             .mobile-menu-toggle { display: block; }
             .sidebar {
@@ -193,6 +217,24 @@
 </head>
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+    <!-- Modal Odtwarzacza Wideo (Podgląd) -->
+    <div id="playerModal">
+        <div class="player-modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="modalClipTitle" style="font-size: 16px; color: #818cf8;">Podgląd Klipu</h3>
+                <button onclick="closePlayerModal()" class="mini-btn" style="background: #ef4444;">✕</button>
+            </div>
+            <!-- Symulacja pionowego odtwarzacza 9:16 -->
+            <div style="width: 100%; height: 360px; background: #000; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden;">
+                <div style="color: #fff; font-size: 14px; font-weight: bold; text-align: center; padding: 0 20px;" id="modalVideoPlaceholder">Odtwarzanie wybranego fragmentu (9:16)...</div>
+                <div style="position: absolute; bottom: 10px; font-size: 11px; color: #22c55e; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px;">Automatyczne napisy aktywne</div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 10px;">Pobierz ten klip 📥</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Ekran logowania / rejestracji -->
     <div id="authScreen">
@@ -224,9 +266,6 @@
             <button class="menu-btn" onclick="switchTab('generator', event)">
                 <span>🤖 Generator AI Reels</span>
             </button>
-            <button class="menu-btn" onclick="switchTab('publish', event)">
-                <span>📤 Eksport / YouTube Shorts</span>
-            </button>
             <button class="menu-btn" id="adminMenuBtn" style="display: none;" onclick="switchTab('admin', event)">
                 <span>⚙️ Panel Administratora</span>
             </button>
@@ -242,7 +281,7 @@
 
     <div class="main-content">
         
-        <!-- 0. ZAKŁADKA: Tworzenie Klipu z YouTube (NOWA) -->
+        <!-- ZAKŁADKA: Tworzenie Klipu z YouTube -->
         <div id="tab-clipper" class="tab-content active">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -255,10 +294,9 @@
             </div>
 
             <div id="tab-clipper-content" style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 20px;">
-                <!-- Pole wklejania linku -->
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
                     <h3 style="font-size: 16px; color: #818cf8;">🔗 Wklej link do filmu z YouTube</h3>
-                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje ścieżkę dźwiękową i obraz, po czym wygeneruje około 6 najciekawszych momentów (15-20 sek.) pod Shorts/Reels/TikTok[cite: 2].</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje materiał i wskaże 6 najciekawszych momentów (15-20 sek.), które możesz od razu obejrzeć lub pobrać[cite: 2].</p>
                     
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="ytUrlInput" placeholder="https://www.youtube.com/watch?v=..." class="auth-input" style="flex: 1; min-width: 280px;">
@@ -266,19 +304,15 @@
                     </div>
                 </div>
 
-                <!-- Status Przetwarzania -->
-                <div id="clipperLoading" style="display: none; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; flex-direction: column; items-center; justify-center; gap: 12px;">
+                <div id="clipperLoading" style="display: none; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; flex-direction: column; justify-content: center; gap: 12px;">
                     <div style="font-size: 28px;">⚡</div>
-                    <div style="font-weight: bold; font-size: 16px; color: #818cf8;" id="clipperStatusText">Pobieranie transkrypcji i szukanie wirusowych momentów...</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Automatyczne kadrowanie do 9:16 oraz generowanie napisów.</div>
+                    <div style="font-weight: bold; font-size: 16px; color: #818cf8;">Pobieranie transkrypcji i szukanie wirusowych momentów...</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Automatyczne kadrowanie do formatu 9:16 oraz generowanie napisów.</div>
                 </div>
 
-                <!-- Wyniki / Wygenerowane Klipy -->
                 <div id="clipperResults" style="display: none; flex-direction: column; gap: 16px;">
-                    <h3 style="font-size: 18px; color: var(--text-main);">🔥 Wyryte 6 Najciekawszych Klipów (15-20s):</h3>
-                    <div class="clip-grid" id="clipGridContainer">
-                        <!-- Klipy generowane dynamicznie -->
-                    </div>
+                    <h3 style="font-size: 18px; color: var(--text-main);">🔥 Wykryte 6 Najciekawszych Klipów (15-20s):</h3>
+                    <div class="clip-grid" id="clipGridContainer"></div>
                 </div>
             </div>
 
@@ -370,10 +404,7 @@
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <h3 style="font-size: 16px; color: var(--text-main);">📋 Wygenerowany scenariusz</h3>
-                        <div style="display: flex; gap: 8px;">
-                            <button onclick="copyGeneratorOutput()" class="mini-btn btn-primary">Kopiuj tekst 📋</button>
-                            <button onclick="sendToPublish()" class="mini-btn" style="background: #22c55e;">Wyślij do Eksportu ➡️</button>
-                        </div>
+                        <button onclick="copyGeneratorOutput()" class="mini-btn btn-primary">Kopiuj tekst 📋</button>
                     </div>
                     <textarea id="genOutput" readonly placeholder="Tutaj pojawi się gotowy scenariusz (Hook, Treść, CTA i hashtagi)..." style="width: 100%; height: 240px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 14px; border-radius: 6px; font-size: 14px; resize: vertical; line-height: 1.5;"></textarea>
                 </div>
@@ -386,48 +417,7 @@
             </div>
         </div>
 
-        <!-- 3. Zakładka: Eksport / YouTube Shorts -->
-        <div id="tab-publish" class="tab-content">
-            <div class="top-bar">
-                <div class="top-bar-left">
-                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>📤 Studio Publikacji i Eksportu na YouTube Shorts</h2>
-                </div>
-                <button class="theme-toggle-btn" onclick="toggleTheme()">
-                    <span>☀️</span> <span>Tryb jasny</span>
-                </button>
-            </div>
-
-            <div id="tab-publish-content" class="chat-container" style="padding: 24px; overflow-y: auto; gap: 20px; display: flex; flex-direction: column;">
-                <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 16px;">
-                    <h3 style="font-size: 16px; color: #818cf8;">🎬 Przygotowanie pliku wideo do wysłania</h3>
-                    <p style="font-size: 13px; color: var(--text-muted);">Skopiowany lub wygenerowany scenariusz możesz przekształcić w gotowe pionowe wideo 9:16 i opublikować na YouTube, by generować wyświetlenia.</p>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="font-size: 13px; color: var(--text-muted);">Tytuł rolki na YouTube:</label>
-                        <input type="text" id="pubTitle" placeholder="np. Szybki sposób na sukces #shorts" class="auth-input">
-                    </div>
-
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <label style="font-size: 13px; color: var(--text-muted);">Treść scenariusza / Opis:</label>
-                        <textarea id="pubDescription" placeholder="Wklej tutaj swój scenariusz..." style="width: 100%; height: 120px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 6px; font-size: 13px; resize: vertical;"></textarea>
-                    </div>
-
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button onclick="simulateVideoRender()" class="mini-btn btn-primary" style="padding: 12px 20px;">Renderuj wideo 9:16 🎞️</button>
-                        <button onclick="publishToYouTube()" class="mini-btn" style="background: #ef4444; padding: 12px 20px;">Udostępnij bezpośrednio na YouTube Shorts 🔴</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-publish-nosub" class="no-subscription-box" style="display: none;">
-                <div class="no-sub-icon">🔒</div>
-                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
-                <div class="no-sub-desc">Wykup miesięczny dostęp, aby korzystać ze studia publikacji.</div>
-            </div>
-        </div>
-
-        <!-- 4. Zakładka: Panel Administratora -->
+        <!-- 3. Zakładka: Panel Administratora -->
         <div id="tab-admin" class="tab-content">
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -627,15 +617,6 @@
                 document.getElementById('tab-generator-content').style.display = 'none';
                 document.getElementById('tab-generator-nosub').style.display = 'flex';
             }
-        } else if (tabName === 'publish') {
-            document.getElementById('tab-publish').classList.add('active');
-            if (canAccess) {
-                document.getElementById('tab-publish-content').style.display = 'flex';
-                document.getElementById('tab-publish-nosub').style.display = 'none';
-            } else {
-                document.getElementById('tab-publish-content').style.display = 'none';
-                document.getElementById('tab-publish-nosub').style.display = 'flex';
-            }
         } else if (tabName === 'admin') {
             if (currentUser && currentUser.role === 'Administrator') {
                 document.getElementById('tab-admin').classList.add('active');
@@ -652,7 +633,7 @@
         }
     }
 
-    // ✂️ TWORZENIE KLIPÓW Z YOUTUBE (LOGIKA)
+    // ✂️ TWORZENIE KLIPÓW Z YOUTUBE
     function processYtVideo() {
         const url = document.getElementById('ytUrlInput').value.trim();
         if (!url) {
@@ -688,7 +669,7 @@
             { time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
         ];
 
-        mockClips.forEach((clip, index) => {
+        mockClips.forEach((clip) => {
             const card = document.createElement('div');
             card.className = 'clip-card';
             card.innerHTML = `
@@ -697,18 +678,32 @@
                 <div style="font-size: 12px; color: #818cf8;">Czas: ${clip.time} (17 sek.)</div>
                 <div style="font-size: 13px; color: var(--text-muted);">${clip.desc}</div>
                 <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
-                    <button onclick="sendClipToExport('${clip.title.replace(/'/g, "\\'")}', '${clip.desc.replace(/'/g, "\\'")}')" class="mini-btn btn-primary" style="flex: 1;">Eksportuj klip 9:16 🎬</button>
+                    <button onclick="openPlayerModal('${clip.title.replace(/'/g, "\\'")}', '${clip.time}')" class="mini-btn btn-primary" style="flex: 1;">Odtwórz ▶️</button>
+                    <button onclick="downloadClip('${clip.title.replace(/'/g, "\\'")}')" class="mini-btn" style="background: #22c55e; flex: 1;">Pobierz 📥</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    function sendClipToExport(title, desc) {
-        document.getElementById('pubTitle').value = title + " #shorts";
-        document.getElementById('pubDescription').value = desc;
-        switchTab('publish');
-        showToast("Załadowano klip do studia eksportu!");
+    // Modal Odtwarzacza
+    function openPlayerModal(title, timeRange) {
+        document.getElementById('modalClipTitle').textContent = title;
+        document.getElementById('modalVideoPlaceholder').textContent = `Odtwarzanie fragmentu [${timeRange}] w formacie 9:16`;
+        document.getElementById('playerModal').style.display = 'flex';
+    }
+
+    function closePlayerModal() {
+        document.getElementById('playerModal').style.display = 'none';
+    }
+
+    function downloadClip(title) {
+        showToast(`Pobieranie pliku wideo dla: "${title}"...`);
+    }
+
+    function downloadActiveClip() {
+        showToast("Pobieranie gotowego klipu 9:16 rozpoczęte!");
+        closePlayerModal();
     }
 
     // Tablica społeczności
@@ -791,36 +786,24 @@
         let cta = "";
 
         if (style === 'shock') {
-            hook = `SZOKUJĄCA PRAWDA O: "${topic.toUpperCase()}"! 🛑\n(Wizualnie: Zbliżenie z poważną miną, szybkie cięcia i czerwone napisy)`;
-            body = `Wszyscy kłamią Cię w tej sprawie, żebyś tkwił w miejscu. Oto fakt, o którym milczą wielkie media: ${topic} działa zupełnie inaczej, niż myślisz. Jeśli nie zmienisz podejścia dzisiaj, stracisz najwięcej.`;
-            cta = `Napisz w komentarzu, czy masz odwagę przyznać mi rację! Obserwuj po więcej prawdy.`;
+            hook = `SZOKUJĄCA PRAWDA O: "${topic.toUpperCase()}"! 🛑`;
+            body = `Wszyscy kłamią Cię w tej sprawie, żebyś tkwił w miejscu. Oto fakt, o którym milczą wielkie media: ${topic} działa zupełnie inaczej, niż myślisz.`;
+            cta = `Napisz w komentarzu, czy masz odwagę przyznać mi rację!`;
         } else if (style === 'tips') {
             hook = `3 zasady dotyczące "${topic}", które całkowicie odmienią Twoje wyniki! 💡`;
-            body = `Zasada numer jeden: zapomnij o starych metodach. Zamiast tego zrób to: [krok 1]. Zasada numer dwa: skup się wyłącznie na efekcie dźwigni. I najważniejsza, trzecia zasada...`;
-            cta = `Zapisz tę rolkę na później, żeby nie zapomnieć!`;
+            body = `Zasada numer jeden: zapomnij o starych metodach. Zamiast tego zrób to: [krok 1].`;
+            cta = `Zapisz tę rolkę na później!`;
         } else if (style === 'story') {
             hook = `Kiedy zaczynałem z "${topic}", każdy mówił mi, że to nie ma sensu... 📖`;
-            body = `Wszyscy wokół myśleli, że tracę czas. Popełniłem mnóstwo błędów i niemal się poddałem, aż w końcu odkryłem ten jeden punkt zwrotny... Od tej pory wszystko się zmieniło.`;
-            cta = `Podziel się tym wideo z kimś, kto tego potrzebuje!`;
+            body = `Wszyscy wokół myśleli, że tracę czas, aż w końcu odkryłem ten jeden punkt zwrotny.`;
+            cta = `Udostępnij to znajomemu!`;
         } else {
             hook = `Sekret dotyczący "${topic}", którego nikt nie chce Ci wyjawić! 🤫`;
-            body = `Elity trzymają to w tajemnicy, bo daje to zbyt wielką przewagę. Gdy poznałem ten mechanizm, nie mogłem uwierzyć, jak proste to było.`;
-            cta = `Zaobserwuj profil po codzienne dawki poufnej wiedzy!`;
+            body = `Elity trzymają to w tajemnicy, bo daje to zbyt wielką przewagę.`;
+            cta = `Zaobserwuj po codzienne dawki wiedzy!`;
         }
 
-        const fullScript = `--- SCENARIUSZ REELS ---
-[HOOK / 0-3 sekunda]:
-${hook}
-
-[GŁÓWNA TREŚĆ / 3-20 sekunda]:
-${body}
-
-[CTA / 20-30 sekunda]:
-${cta}
-
-#shorts #viral #${topic.replace(/\s+/g, '')} #sukces #rozwój`;
-
-        output.value = fullScript;
+        output.value = `--- SCENARIUSZ ---\n[HOOK]:\n${hook}\n\n[TREŚĆ]:\n${body}\n\n[CTA]:\n${cta}\n\n#shorts #viral #${topic.replace(/\s+/g, '')}`;
         showToast("Wygenerowano scenariusz!");
     }
 
@@ -829,43 +812,6 @@ ${cta}
         if (!output.value) return;
         navigator.clipboard.writeText(output.value);
         showToast("Skopiowano do schowka!");
-    }
-
-    function sendToPublish() {
-        const output = document.getElementById('genOutput').value;
-        if (!output) {
-            alert("Najpierw wygeneruj scenariusz!");
-            return;
-        }
-        document.getElementById('pubDescription').value = output;
-        document.getElementById('pubTitle').value = document.getElementById('genTopic').value || "Viralowa Rolka";
-        switchTab('publish');
-        showToast("Przeniesiono do studia publikacji!");
-    }
-
-    // Publikacja / Eksport
-    function simulateVideoRender() {
-        const title = document.getElementById('pubTitle').value;
-        if (!title) {
-            alert("Wpisz tytuł wideo!");
-            return;
-        }
-        showToast("Trwa renderowanie pionowego wideo 9:16 z napisami...");
-        setTimeout(() => {
-            showToast("Wideo zostało pomyślnie wyrenderowane!");
-        }, 2000);
-    }
-
-    function publishToYouTube() {
-        const title = document.getElementById('pubTitle').value;
-        if (!title) {
-            alert("Wpisz tytuł wideo!");
-            return;
-        }
-        showToast("Łączenie z API YouTube Shorts...");
-        setTimeout(() => {
-            alert("Pomyślnie opublikowano film jako YouTube Short!");
-        }, 1500);
     }
 
     // Panel Administratora
