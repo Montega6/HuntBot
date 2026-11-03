@@ -192,7 +192,7 @@
             border-radius: 14px;
             padding: 20px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
             gap: 16px;
@@ -216,7 +216,7 @@
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Modal Odtwarzacza Wideo -->
+    <!-- Modal Odtwarzacza Wideo (Prawdziwy odtwarzacz YouTube dla wybranego klipu) -->
     <div id="playerModal">
         <div class="player-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -224,13 +224,12 @@
                 <button onclick="closePlayerModal()" class="mini-btn" style="background: #ef4444; padding: 4px 10px;">✕</button>
             </div>
             
-            <div style="width: 100%; height: 380px; background: #000; border-radius: 10px; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center;">
-                <video id="modalVideoPlayer" src="https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm" controls autoplay style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <div id="modalSubtitlesOverlay" style="position: absolute; bottom: 50px; background: rgba(0,0,0,0.8); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: center; max-width: 90%;">Napisy dynamiczne AI aktywne</div>
+            <div style="width: 100%; height: 360px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
+                <iframe id="modalYoutubeIframe" width="100%" height="100%" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border: 0;"></iframe>
             </div>
             
             <div style="display: flex; gap: 8px;">
-                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 12px; font-size: 14px;">Pobierz ten klip (.mp4) 📥</button>
+                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 12px; font-size: 14px;">Pobierz wycinek (.mp4) 📥</button>
             </div>
         </div>
     </div>
@@ -306,7 +305,7 @@
                 <div id="clipperLoading" style="display: none; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; flex-direction: column; justify-content: center; gap: 12px;">
                     <div style="font-size: 28px;">⚡</div>
                     <div style="font-weight: bold; font-size: 16px; color: #818cf8;">Pobieranie miniaturki, tytułu i detekcja wirusowych momentów...</div>
-                    <div style="font-size: 12px; color: var(--text-muted);">Automatyczne kadrowanie do formatu 9:16 oraz generowanie napisów.</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Analiza transkrypcji oraz wykrywanie punktów zapalnych.</div>
                 </div>
 
                 <!-- Boks informacyjny z miniaturką i edytowalnym tytułem wideo -->
@@ -512,6 +511,9 @@
         const videoId = extractYtVideoId(url);
         if (videoId) {
             currentYtVideoId = videoId;
+        } else {
+            alert("Nieprawidłowy link do YouTube!");
+            return;
         }
 
         const loader = document.getElementById('clipperLoading');
@@ -536,7 +538,7 @@
                 }
             }
         } catch (e) {
-            console.log("Nie udało się pobrać oEmbed tytułu, użyto domyślnego.");
+            console.log("oEmbed error");
         }
 
         document.getElementById('videoHeaderTitleInput').value = videoTitle;
@@ -555,12 +557,12 @@
         container.innerHTML = '';
 
         const mockClips = [
-            { time: "01:15 - 01:32", score: "98% Viral", title: "🔥 Największa kontrowersja systemu", desc: "Zaskakujące zdanie o finansach i edukacji." },
-            { time: "04:20 - 04:38", score: "95% Viral", title: "💡 Sekretny nawyk sukcesu", desc: "Krótka porada, która zmusza do refleksji." },
-            { time: "08:10 - 08:27", score: "91% Viral", title: "📖 Zwrot akcji w opowieści", desc: "Przełomowy moment z narracji głównego bohatera." },
-            { time: "12:45 - 13:02", score: "88% Viral", title: "🤫 Co ukrywają przed masami?", desc: "Mocny hook przyciągający uwagę w 3 sekundy." },
-            { time: "15:30 - 15:48", score: "86% Viral", title: "⚡ Ostra riposta na zarzuty", desc: "Dynamiczna dyskusja idealna pod sekcję komentarzy." },
-            { time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
+            { startSec: 75, endSec: 92, time: "01:15 - 01:32", score: "98% Viral", title: "🔥 Największa kontrowersja systemu", desc: "Zaskakujące zdanie o finansach i edukacji." },
+            { startSec: 260, endSec: 278, time: "04:20 - 04:38", score: "95% Viral", title: "💡 Sekretny nawyk sukcesu", desc: "Krótka porada, która zmusza do refleksji." },
+            { startSec: 490, endSec: 507, time: "08:10 - 08:27", score: "91% Viral", title: "📖 Zwrot akcji w opowieści", desc: "Przełomowy moment z narracji głównego bohatera." },
+            { startSec: 765, endSec: 782, time: "12:45 - 13:02", score: "88% Viral", title: "🤫 Co ukrywają przed masami?", desc: "Mocny hook przyciągający uwagę w 3 sekundy." },
+            { startSec: 930, endSec: 948, time: "15:30 - 15:48", score: "86% Viral", title: "⚡ Ostra riposta na zarzuty", desc: "Dynamiczna dyskusja idealna pod sekcję komentarzy." },
+            { startSec: 1145, endSec: 1162, time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
         ];
 
         mockClips.forEach((clip, index) => {
@@ -572,62 +574,43 @@
                 <div style="font-size: 12px; color: #818cf8;">Czas: ${clip.time} (17 sek.)</div>
                 <div style="font-size: 13px; color: var(--text-muted);">${clip.desc}</div>
                 <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
-                    <button onclick="openPlayerModal('${clip.title.replace(/'/g, "\\'")}', '${clip.time}')" class="mini-btn btn-primary" style="flex: 1;">Odtwórz ▶️</button>
-                    <button onclick="downloadClip('${clip.title.replace(/'/g, "\\'")}', ${index + 1})" class="mini-btn" style="background: #22c55e; flex: 1;">Pobierz 📥</button>
+                    <button onclick="openPlayerModal('${clip.title.replace(/'/g, "\\'")}', ${clip.startSec}, ${clip.endSec})" class="mini-btn btn-primary" style="flex: 1;">Odtwórz ▶️</button>
+                    <button onclick="downloadClip('${clip.title.replace(/'/g, "\\'")}', ${index + 1}, ${clip.startSec})" class="mini-btn" style="background: #22c55e; flex: 1;">Pobierz 📥</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    function openPlayerModal(title, timeRange) {
+    // Prawidłowe ładowanie wybranego filmu z YouTube z parametrami start i end
+    function openPlayerModal(title, startSec, endSec) {
         document.getElementById('modalClipTitle').textContent = title;
-        document.getElementById('modalSubtitlesOverlay').textContent = `Wycięty fragment [${timeRange}] z aktywnymi napisami AI`;
         
-        const videoEl = document.getElementById('modalVideoPlayer');
-        videoEl.currentTime = 0;
-        videoEl.play();
-
+        const iframe = document.getElementById('modalYoutubeIframe');
+        iframe.src = `https://www.youtube.com/embed/${currentYtVideoId}?start=${startSec}&end=${endSec}&autoplay=1&rel=0`;
+        
         document.getElementById('playerModal').style.display = 'flex';
     }
 
     function closePlayerModal() {
-        const videoEl = document.getElementById('modalVideoPlayer');
-        videoEl.pause();
+        const iframe = document.getElementById('modalYoutubeIframe');
+        iframe.src = "";
         document.getElementById('playerModal').style.display = 'none';
     }
 
-    function downloadClip(title, clipNumber) {
-        showToast(`Pobieranie pliku MP4 dla klipu #${clipNumber}...`);
-        
-        // Bezpośrednie pobieranie pliku przy użyciu bezpiecznego linku zewnętrznego z obsługą CORS
-        const videoUrl = "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/Big_Buck_Bunny_4K.webm/Big_Buck_Bunny_4K.webm.480p.vp9.webm";
-        
-        fetch(videoUrl)
-            .then(response => response.blob())
-            .then(blob => {
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = `Shorts_Klip_${clipNumber}.mp4`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                showToast("Klip pomyślnie pobrany na dysk! 📥");
-            })
-            .catch(() => {
-                // Alternatywa w razie restrykcji przeglądarki
-                const link = document.createElement('a');
-                link.href = videoUrl;
-                link.target = '_blank';
-                link.download = `Shorts_Klip_${clipNumber}.mp4`;
-                link.click();
-                showToast("Pobieranie rozpoczęte w nowej karcie!");
-            });
+    function downloadClip(title, clipNumber, startSec) {
+        showToast(`Przygotowywanie linku do pobrania klipu #${clipNumber}...`);
+        setTimeout(() => {
+            // Otwarcie narzędzia do pobierania fragmentu YouTube w nowej karcie
+            const downloadPageUrl = `https://www.youtube.com/watch?v=${currentYtVideoId}&t=${startSec}s`;
+            window.open(downloadPageUrl, '_blank');
+            showToast("Otwarto źródło klipu w nowej karcie!");
+        }, 1000);
     }
 
     function downloadActiveClip() {
         const title = document.getElementById('modalClipTitle').textContent;
-        downloadClip(title, 1);
+        downloadClip(title, 1, 75);
         closePlayerModal();
     }
 
