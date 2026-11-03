@@ -216,7 +216,7 @@
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Modal Odtwarzacza Wideo (Prawdziwy odtwarzacz YouTube dla wybranego klipu) -->
+    <!-- Modal Odtwarzacza Wideo z API YouTube (odtwarza tylko wyselekcjonowany wycinek) -->
     <div id="playerModal">
         <div class="player-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -225,7 +225,7 @@
             </div>
             
             <div style="width: 100%; height: 360px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
-                <iframe id="modalYoutubeIframe" width="100%" height="100%" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border: 0;"></iframe>
+                <div id="youtubePlayerContainer" style="width: 100%; height: 100%;"></div>
             </div>
             
             <div style="display: flex; gap: 8px;">
@@ -294,7 +294,7 @@
             <div id="tab-clipper-content" style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 20px;">
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
                     <h3 style="font-size: 16px; color: #818cf8;">🔗 Wklej link do filmu z YouTube</h3>
-                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje materiał i wygeneruje 6 najciekawszych momentów pod Shorts/Reels/TikTok[cite: 2].</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje materiał i wygeneruje 6 najciekawszych momentów pod Shorts/Reels/TikTok.</p>
                     
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="ytUrlInput" placeholder="https://www.youtube.com/watch?v=..." class="auth-input" style="flex: 1; min-width: 280px;">
@@ -346,6 +346,9 @@
         </div>
     </div>
 
+    <!-- Załadowanie oficjalnego skryptu YouTube Iframe API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
     const SUPABASE_URL = "https://nikvmsybrtgxcyuqpgkd.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_jUHmB7NrrMhlV4FjKYo1yQ_xBt7blfX"; 
@@ -359,6 +362,10 @@
     let isRegisterMode = false;
     let currentUser = null;
     let currentYtVideoId = "dQw4w9WgXcQ"; 
+    let ytPlayer = null;
+    let clipEndTimer = null;
+    let activeStartSec = 0;
+    let activeEndSec = 0;
 
     async function hashPassword(password) {
         const msgBuffer = new TextEncoder().encode(password);
@@ -582,26 +589,73 @@
         });
     }
 
-    // Prawidłowe ładowanie wybranego filmu z YouTube z parametrami start i end
+    // Inicjalizacja oraz obsługa odtwarzania ścisłego fragmentu przez YouTube API
     function openPlayerModal(title, startSec, endSec) {
         document.getElementById('modalClipTitle').textContent = title;
-        
-        const iframe = document.getElementById('modalYoutubeIframe');
-        iframe.src = `https://www.youtube.com/embed/${currentYtVideoId}?start=${startSec}&end=${endSec}&autoplay=1&rel=0`;
+        activeStartSec = startSec;
+        activeEndSec = endSec;
         
         document.getElementById('playerModal').style.display = 'flex';
+
+        if (clipEndTimer) clearInterval(clipEndTimer);
+
+        if (window.YT && window.YT.Player) {
+            if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytPlayer.loadVideoById({
+                    videoId: currentYtVideoId,
+                    startSeconds: startSec,
+                    endSeconds: endSec
+                });
+            } else {
+                ytPlayer = new YT.Player('youtubePlayerContainer', {
+                    height: '100%',
+                    width: '100%',
+                    videoId: currentYtVideoId,
+                    playerVars: {
+                        'autoplay': 1,
+                        'start': startSec,
+                        'end': endSec,
+                        'rel': 0
+                    },
+                    events: {
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+        }
+
+        // Zabezpieczenie czasowe: zatrzymanie odtwarzacza po osiągnięciu końca klipu
+        const durationMs = (endSec - startSec) * 1000;
+        clipEndTimer = setInterval(() => {
+            if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+                if (ytPlayer.getCurrentTime() >= endSec) {
+                    ytPlayer.pauseVideo();
+                    clearInterval(clipEndTimer);
+                }
+            }
+        }, 500);
+    }
+
+    function onPlayerStateChange(event) {
+        // Gdy film się zakończy, automatycznie zapauzuj
+        if (event.data === YT.PlayerState.ENDED) {
+            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+                ytPlayer.pauseVideo();
+            }
+        }
     }
 
     function closePlayerModal() {
-        const iframe = document.getElementById('modalYoutubeIframe');
-        iframe.src = "";
+        if (clipEndTimer) clearInterval(clipEndTimer);
+        if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
+            ytPlayer.stopVideo();
+        }
         document.getElementById('playerModal').style.display = 'none';
     }
 
     function downloadClip(title, clipNumber, startSec) {
         showToast(`Przygotowywanie linku do pobrania klipu #${clipNumber}...`);
         setTimeout(() => {
-            // Otwarcie narzędzia do pobierania fragmentu YouTube w nowej karcie
             const downloadPageUrl = `https://www.youtube.com/watch?v=${currentYtVideoId}&t=${startSec}s`;
             window.open(downloadPageUrl, '_blank');
             showToast("Otwarto źródło klipu w nowej karcie!");
@@ -610,7 +664,7 @@
 
     function downloadActiveClip() {
         const title = document.getElementById('modalClipTitle').textContent;
-        downloadClip(title, 1, 75);
+        downloadClip(title, 1, activeStartSec);
         closePlayerModal();
     }
 
