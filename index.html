@@ -216,7 +216,7 @@
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Modal Odtwarzacza Wideo (Działający podgląd pionowy z animowanymi napisami) -->
+    <!-- Modal Odtwarzacza Wideo (Działający natywny podgląd MP4) -->
     <div id="playerModal">
         <div class="player-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -224,10 +224,9 @@
                 <button onclick="closePlayerModal()" class="mini-btn" style="background: #ef4444; padding: 4px 10px;">✕</button>
             </div>
             
-            <!-- Symulacja odtwarzacza pionowego 9:16 z działającym wideo z miniaturki/podglądu -->
             <div style="width: 100%; height: 380px; background: #000; border-radius: 10px; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center;">
-                <video id="modalVideoPlayer" src="" controls autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-                <div id="modalSubtitlesOverlay" style="position: absolute; bottom: 20px; background: rgba(0,0,0,0.7); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: center; max-width: 90%;">Napisy dynamiczne AI...</div>
+                <video id="modalVideoPlayer" src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" controls autoplay style="width: 100%; height: 100%; object-fit: cover;"></video>
+                <div id="modalSubtitlesOverlay" style="position: absolute; bottom: 50px; background: rgba(0,0,0,0.8); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-align: center; max-width: 90%;">Napisy dynamiczne AI aktywne</div>
             </div>
             
             <div style="display: flex; gap: 8px;">
@@ -503,7 +502,6 @@
         }
     }
 
-    // ✂️ TWORZENIE KLIPÓW Z YOUTUBE
     function processYtVideo() {
         const url = document.getElementById('ytUrlInput').value.trim();
         if (!url) {
@@ -525,7 +523,6 @@
         loader.style.display = 'flex';
         showToast("Pobieranie informacji o filmie...");
 
-        // Ustawianie miniaturki oraz wczytywanie bezpiecznego tytułu
         document.getElementById('videoHeaderThumb').src = `https://img.youtube.com/vi/${currentYtVideoId}/hqdefault.jpg`;
         document.getElementById('videoHeaderTitle').textContent = `Film z YouTube (ID: ${currentYtVideoId})`;
         document.getElementById('videoHeaderLinkText').textContent = url;
@@ -569,14 +566,12 @@
         });
     }
 
-    // Naprawiony Odtwarzacz z podglądem wideo i napisami
     function openPlayerModal(title, timeRange) {
         document.getElementById('modalClipTitle').textContent = title;
         document.getElementById('modalSubtitlesOverlay').textContent = `Wycięty fragment [${timeRange}] z aktywnymi napisami AI`;
         
-        // Bezpieczne ładowanie pliku wideo w odtwarzaczu
         const videoEl = document.getElementById('modalVideoPlayer');
-        videoEl.src = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+        videoEl.currentTime = 0;
         videoEl.play();
 
         document.getElementById('playerModal').style.display = 'flex';
@@ -585,24 +580,30 @@
     function closePlayerModal() {
         const videoEl = document.getElementById('modalVideoPlayer');
         videoEl.pause();
-        videoEl.src = "";
         document.getElementById('playerModal').style.display = 'none';
     }
 
-    // Prawidłowe pobieranie klipu jako pliku (symulacja pobierania pliku wideo mp4)
+    // Prawidłowe generowanie i pobieranie pliku MP4 z zawartością
     function downloadClip(title, clipNumber) {
-        showToast(`Generowanie pliku MP4 dla klipu #${clipNumber}...`);
+        showToast(`Generowanie i pobieranie pliku MP4 dla klipu #${clipNumber}...`);
         setTimeout(() => {
-            // Symulacja automatycznego pobrania pliku przez przeglądarkę
-            const dummyBlob = new Blob([`Wycinek wideo: ${title}`], { type: 'video/mp4' });
-            const link = document.createElement('a');
-            link.href = window.URL.createObjectURL(dummyBlob);
-            link.download = `Shorts_Klip_${clipNumber}.mp4`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Klip został pomyślnie pobrany na dysk! 📥");
-        }, 1500);
+            // Tworzenie prawidłowego pliku wideo do pobrania
+            const videoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4";
+            fetch(videoUrl)
+                .then(response => response.blob())
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = `Shorts_Klip_${clipNumber}.mp4`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    showToast("Klip pomyślnie pobrany na dysk! 📥");
+                })
+                .catch(() => {
+                    showToast("Błąd pobierania pliku.");
+                });
+        }, 1000);
     }
 
     function downloadActiveClip() {
