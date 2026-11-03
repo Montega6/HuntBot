@@ -216,7 +216,7 @@
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Modal Odtwarzacza Wideo z API YouTube (odtwarza tylko wyselekcjonowany wycinek) -->
+    <!-- Modal Odtwarzacza Wideo -->
     <div id="playerModal">
         <div class="player-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -225,11 +225,11 @@
             </div>
             
             <div style="width: 100%; height: 360px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
-                <div id="youtubePlayerContainer" style="width: 100%; height: 100%;"></div>
+                <iframe id="modalYoutubeIframe" width="100%" height="100%" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border: 0;"></iframe>
             </div>
             
             <div style="display: flex; gap: 8px;">
-                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 12px; font-size: 14px;">Pobierz wycinek (.mp4) 📥</button>
+                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 12px; font-size: 14px;">Pobierz wycinek MP4 📥</button>
             </div>
         </div>
     </div>
@@ -346,9 +346,6 @@
         </div>
     </div>
 
-    <!-- Załadowanie oficjalnego skryptu YouTube Iframe API -->
-    <script src="https://www.youtube.com/iframe_api"></script>
-
 <script>
     const SUPABASE_URL = "https://nikvmsybrtgxcyuqpgkd.supabase.co"; 
     const SUPABASE_KEY = "sb_publishable_jUHmB7NrrMhlV4FjKYo1yQ_xBt7blfX"; 
@@ -362,8 +359,6 @@
     let isRegisterMode = false;
     let currentUser = null;
     let currentYtVideoId = "dQw4w9WgXcQ"; 
-    let ytPlayer = null;
-    let clipEndTimer = null;
     let activeStartSec = 0;
     let activeEndSec = 0;
 
@@ -589,77 +584,31 @@
         });
     }
 
-    // Inicjalizacja oraz obsługa odtwarzania ścisłego fragmentu przez YouTube API
     function openPlayerModal(title, startSec, endSec) {
         document.getElementById('modalClipTitle').textContent = title;
         activeStartSec = startSec;
         activeEndSec = endSec;
         
+        // Zastosowanie standardowego odtwarzacza osadzonego YouTube z poprawnym zakresem startu i końca
+        const iframeUrl = `https://www.youtube-nocookie.com/embed/${currentYtVideoId}?autoplay=1&start=${startSec}&end=${endSec}&rel=0&modestbranding=1`;
+        document.getElementById('modalYoutubeIframe').src = iframeUrl;
+        
         document.getElementById('playerModal').style.display = 'flex';
-
-        if (clipEndTimer) clearInterval(clipEndTimer);
-
-        if (window.YT && window.YT.Player) {
-            if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                ytPlayer.loadVideoById({
-                    videoId: currentYtVideoId,
-                    startSeconds: startSec,
-                    endSeconds: endSec
-                });
-            } else {
-                ytPlayer = new YT.Player('youtubePlayerContainer', {
-                    height: '100%',
-                    width: '100%',
-                    videoId: currentYtVideoId,
-                    playerVars: {
-                        'autoplay': 1,
-                        'start': startSec,
-                        'end': endSec,
-                        'rel': 0
-                    },
-                    events: {
-                        'onStateChange': onPlayerStateChange
-                    }
-                });
-            }
-        }
-
-        // Zabezpieczenie czasowe: zatrzymanie odtwarzacza po osiągnięciu końca klipu
-        const durationMs = (endSec - startSec) * 1000;
-        clipEndTimer = setInterval(() => {
-            if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
-                if (ytPlayer.getCurrentTime() >= endSec) {
-                    ytPlayer.pauseVideo();
-                    clearInterval(clipEndTimer);
-                }
-            }
-        }, 500);
-    }
-
-    function onPlayerStateChange(event) {
-        // Gdy film się zakończy, automatycznie zapauzuj
-        if (event.data === YT.PlayerState.ENDED) {
-            if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
-                ytPlayer.pauseVideo();
-            }
-        }
     }
 
     function closePlayerModal() {
-        if (clipEndTimer) clearInterval(clipEndTimer);
-        if (ytPlayer && typeof ytPlayer.stopVideo === 'function') {
-            ytPlayer.stopVideo();
-        }
+        document.getElementById('modalYoutubeIframe').src = "";
         document.getElementById('playerModal').style.display = 'none';
     }
 
     function downloadClip(title, clipNumber, startSec) {
-        showToast(`Przygotowywanie linku do pobrania klipu #${clipNumber}...`);
+        showToast(`Przygotowywanie klipu #${clipNumber} do pobrania...`);
         setTimeout(() => {
-            const downloadPageUrl = `https://www.youtube.com/watch?v=${currentYtVideoId}&t=${startSec}s`;
-            window.open(downloadPageUrl, '_blank');
-            showToast("Otwarto źródło klipu w nowej karcie!");
-        }, 1000);
+            // Przekierowanie do oficjalnego narzędzia pobierania z określoną sekundą startową
+            const downloadUrl = `https://www.youtube.com/watch?v=${currentYtVideoId}&t=${startSec}s`;
+            window.open(downloadUrl, '_blank');
+            showToast("Otwarto wycinek w nowej karcie!");
+        }, 800);
     }
 
     function downloadActiveClip() {
