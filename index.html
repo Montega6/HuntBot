@@ -151,6 +151,32 @@
         .no-sub-title { font-size: 20px; font-weight: bold; color: #f59e0b; margin-bottom: 12px; }
         .no-sub-desc { font-size: 15px; color: var(--text-muted); line-height: 1.5; }
 
+        /* Karty klipów AI */
+        .clip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .clip-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .clip-badge {
+            align-self: flex-start;
+            background: #22c55e;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
         @media (max-width: 992px) {
             .mobile-menu-toggle { display: block; }
             .sidebar {
@@ -189,7 +215,10 @@
         </div>
         
         <div class="menu-group">
-            <button class="menu-btn active" onclick="switchTab('community', event)">
+            <button class="menu-btn active" onclick="switchTab('clipper', event)">
+                <span>✂️ Tworzenie klipu z YT</span>
+            </button>
+            <button class="menu-btn" onclick="switchTab('community', event)">
                 <span>💡 Tablica Społeczności</span>
             </button>
             <button class="menu-btn" onclick="switchTab('generator', event)">
@@ -212,20 +241,67 @@
     </div>
 
     <div class="main-content">
-        <!-- 1. Zakładka: Tablica Społeczności -->
-        <div id="tab-community" class="tab-content active">
+        
+        <!-- 0. ZAKŁADKA: Tworzenie Klipu z YouTube (NOWA) -->
+        <div id="tab-clipper" class="tab-content active">
             <div class="top-bar">
                 <div class="top-bar-left">
                     <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
-                    <h2>💡 Tablica Pomysłów i Inspiracji Społeczności</h2>
+                    <h2>✂️ AI Clipper - Automatyczne Wycinanie Klipów z YouTube</h2>
                 </div>
                 <button class="theme-toggle-btn" onclick="toggleTheme()">
                     <span id="themeIcon">☀️</span> <span id="themeText">Tryb jasny</span>
                 </button>
             </div>
 
+            <div id="tab-clipper-content" style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 20px;">
+                <!-- Pole wklejania linku -->
+                <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
+                    <h3 style="font-size: 16px; color: #818cf8;">🔗 Wklej link do filmu z YouTube</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje ścieżkę dźwiękową i obraz, po czym wygeneruje około 6 najciekawszych momentów (15-20 sek.) pod Shorts/Reels/TikTok[cite: 2].</p>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="text" id="ytUrlInput" placeholder="https://www.youtube.com/watch?v=..." class="auth-input" style="flex: 1; min-width: 280px;">
+                        <button onclick="processYtVideo()" class="mini-btn btn-primary" style="padding: 12px 24px; font-size: 14px; font-weight: bold;">Wygeneruj Klipy AI 🚀</button>
+                    </div>
+                </div>
+
+                <!-- Status Przetwarzania -->
+                <div id="clipperLoading" style="display: none; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; flex-direction: column; items-center; justify-center; gap: 12px;">
+                    <div style="font-size: 28px;">⚡</div>
+                    <div style="font-weight: bold; font-size: 16px; color: #818cf8;" id="clipperStatusText">Pobieranie transkrypcji i szukanie wirusowych momentów...</div>
+                    <div style="font-size: 12px; color: var(--text-muted);">Automatyczne kadrowanie do 9:16 oraz generowanie napisów.</div>
+                </div>
+
+                <!-- Wyniki / Wygenerowane Klipy -->
+                <div id="clipperResults" style="display: none; flex-direction: column; gap: 16px;">
+                    <h3 style="font-size: 18px; color: var(--text-main);">🔥 Wyryte 6 Najciekawszych Klipów (15-20s):</h3>
+                    <div class="clip-grid" id="clipGridContainer">
+                        <!-- Klipy generowane dynamicznie -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-clipper-nosub" class="no-subscription-box" style="display: none;">
+                <div class="no-sub-icon">🔒</div>
+                <div class="no-sub-title">Brak aktywnej subskrypcji</div>
+                <div class="no-sub-desc">Wykup miesięczny dostęp, aby korzystać z automatycznego wycinacza klipów AI.</div>
+            </div>
+        </div>
+
+        <!-- 1. Zakładka: Tablica Społeczności -->
+        <div id="tab-community" class="tab-content">
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">☰</button>
+                    <h2>💡 Tablica Pomysłów i Inspiracji Społeczności</h2>
+                </div>
+                <button class="theme-toggle-btn" onclick="toggleTheme()">
+                    <span>☀️</span> <span>Tryb jasny</span>
+                </button>
+            </div>
+
             <div id="tab-community-content" style="display: flex; flex-direction: column; flex: 1; overflow: hidden; gap: 16px;">
-                <!-- Formularz dodawania własnego pomysłu -->
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
                     <h3 style="font-size: 16px; color: #818cf8;">✨ Podziel się swoim pomysłem na viralowy Reel</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -240,7 +316,6 @@
                     </div>
                 </div>
 
-                <!-- Lista pomysłów społeczności -->
                 <div class="chat-container" style="padding: 16px; overflow-y: auto;">
                     <h3 style="font-size: 16px; color: var(--text-main); margin-bottom: 12px;">Top pomysły od subskrybentów</h3>
                     <div id="communityIdeasContainer" style="display: flex; flex-direction: column; gap: 10px;">
@@ -498,7 +573,7 @@
             document.getElementById('adminMenuBtn').style.display = 'none';
         }
 
-        switchTab('community');
+        switchTab('clipper');
     }
 
     function logoutUser() {
@@ -524,7 +599,16 @@
 
         const canAccess = hasActiveSubscription();
 
-        if (tabName === 'community') {
+        if (tabName === 'clipper') {
+            document.getElementById('tab-clipper').classList.add('active');
+            if (canAccess) {
+                document.getElementById('tab-clipper-content').style.display = 'flex';
+                document.getElementById('tab-clipper-nosub').style.display = 'none';
+            } else {
+                document.getElementById('tab-clipper-content').style.display = 'none';
+                document.getElementById('tab-clipper-nosub').style.display = 'flex';
+            }
+        } else if (tabName === 'community') {
             document.getElementById('tab-community').classList.add('active');
             if (canAccess) {
                 document.getElementById('tab-community-content').style.display = 'flex';
@@ -568,7 +652,66 @@
         }
     }
 
-    // Tablica społeczności (korzysta teraz z tabeli 'ideas')
+    // ✂️ TWORZENIE KLIPÓW Z YOUTUBE (LOGIKA)
+    function processYtVideo() {
+        const url = document.getElementById('ytUrlInput').value.trim();
+        if (!url) {
+            alert("Proszę wkleić prawidłowy link do filmu z YouTube!");
+            return;
+        }
+
+        const loader = document.getElementById('clipperLoading');
+        const results = document.getElementById('clipperResults');
+        
+        results.style.display = 'none';
+        loader.style.display = 'flex';
+        showToast("Rozpoczęto analizę AI filmu...");
+
+        setTimeout(() => {
+            loader.style.display = 'none';
+            results.style.display = 'flex';
+            generateMockClips();
+            showToast("Wygenerowano 6 klipów!");
+        }, 2500);
+    }
+
+    function generateMockClips() {
+        const container = document.getElementById('clipGridContainer');
+        container.innerHTML = '';
+
+        const mockClips = [
+            { time: "01:15 - 01:32", score: "98% Viral", title: "🔥 Największa kontrowersja systemu", desc: "Zaskakujące zdanie o finansach i edukacji." },
+            { time: "04:20 - 04:38", score: "95% Viral", title: "💡 Sekretny nawyk sukcesu", desc: "Krótka porada, która zmusza do refleksji." },
+            { time: "08:10 - 08:27", score: "91% Viral", title: "📖 Zwrot akcji w opowieści", desc: "Przełomowy moment z narracji głównego bohatera." },
+            { time: "12:45 - 13:02", score: "88% Viral", title: "🤫 Co ukrywają przed masami?", desc: "Mocny hook przyciągający uwagę w 3 sekundy." },
+            { time: "15:30 - 15:48", score: "86% Viral", title: "⚡ Ostra riposta na zarzuty", desc: "Dynamiczna dyskusja idealna pod sekcję komentarzy." },
+            { time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
+        ];
+
+        mockClips.forEach((clip, index) => {
+            const card = document.createElement('div');
+            card.className = 'clip-card';
+            card.innerHTML = `
+                <div class="clip-badge">${clip.score}</div>
+                <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${clip.title}</div>
+                <div style="font-size: 12px; color: #818cf8;">Czas: ${clip.time} (17 sek.)</div>
+                <div style="font-size: 13px; color: var(--text-muted);">${clip.desc}</div>
+                <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
+                    <button onclick="sendClipToExport('${clip.title.replace(/'/g, "\\'")}', '${clip.desc.replace(/'/g, "\\'")}')" class="mini-btn btn-primary" style="flex: 1;">Eksportuj klip 9:16 🎬</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function sendClipToExport(title, desc) {
+        document.getElementById('pubTitle').value = title + " #shorts";
+        document.getElementById('pubDescription').value = desc;
+        switchTab('publish');
+        showToast("Załadowano klip do studia eksportu!");
+    }
+
+    // Tablica społeczności
     async function fetchCommunityIdeas() {
         const container = document.getElementById('communityIdeasContainer');
         container.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Ładowanie pomysłów...</p>';
@@ -606,7 +749,7 @@
         const category = catSelect.value;
 
         if (!title) {
-            showToast("Wpisz treść pomysłu!");
+            alert("Wpisz treść pomysłu!");
             return;
         }
 
@@ -614,201 +757,185 @@
             const { error } = await _supabase.from('ideas').insert([{
                 title: title,
                 source: category,
-                description: currentUser.username,
-                status: 'community'
+                description: currentUser.username
             }]);
             if (error) throw error;
 
             titleInput.value = '';
-            showToast("Opublikowano pomysł na tablicy!");
+            showToast("Pomysł został opublikowany!");
             fetchCommunityIdeas();
         } catch (err) {
-            showToast("Błąd publikacji: " + err.message);
+            alert("Błąd dodawania pomysłu: " + err.message);
         }
     }
 
-    function loadIdeaIntoGenerator(title) {
-        document.getElementById('genTopic').value = title;
+    function loadIdeaIntoGenerator(ideaTitle) {
+        document.getElementById('genTopic').value = ideaTitle;
         switchTab('generator');
-        showToast("Załadowano pomysł do generatora AI!");
+        showToast("Załadowano pomysł do generatora!");
     }
 
-    // Generator AI Reels
+    // Generator AI
     function runAiGenerator() {
-        const topic = document.getElementById('genTopic').value.trim() || "Jak osiągnąć sukces";
+        const topic = document.getElementById('genTopic').value.trim();
         const style = document.getElementById('genStyle').value;
         const output = document.getElementById('genOutput');
+
+        if (!topic) {
+            alert("Wpisz temat wideo!");
+            return;
+        }
 
         let hook = "";
         let body = "";
         let cta = "";
 
         if (style === 'shock') {
-            hook = `🚨 Większość ludzi robi ten jeden błąd w ${topic} i tracą przez to tysiące!`;
-            body = `Oto brutalna prawda, której nikt Ci nie powie. Zamiast marnować czas na przestarzałe metody, spójrz na to z zupełnie innej perspektywy. Wystarczy zaledwie 7 dni, aby całkowicie odmienić podejście i zacząć zauważyć realne efekty.`;
-            cta = `Zapisz tę rolkę, żeby nie zapomnieć, i zaobserwuj po codzienne wskazówki!`;
+            hook = `SZOKUJĄCA PRAWDA O: "${topic.toUpperCase()}"! 🛑\n(Wizualnie: Zbliżenie z poważną miną, szybkie cięcia i czerwone napisy)`;
+            body = `Wszyscy kłamią Cię w tej sprawie, żebyś tkwił w miejscu. Oto fakt, o którym milczą wielkie media: ${topic} działa zupełnie inaczej, niż myślisz. Jeśli nie zmienisz podejścia dzisiaj, stracisz najwięcej.`;
+            cta = `Napisz w komentarzu, czy masz odwagę przyznać mi rację! Obserwuj po więcej prawdy.`;
         } else if (style === 'tips') {
-            hook = `3 szybkie triki dotyczące ${topic}, które musisz poznać dzisiaj!`;
-            body = `Numer jeden: zacznij od małych kroków. Numer dwa: eliminuj to, co rozprasza. Numer trzy: bądź systematyczny. Te proste zasady sprawiły, że najlepsi w branży osiągnęli spektakularne wyniki bez wydawania fortuny.`;
-            cta = `Wyślij ten film znajomemu, któremu też się to przyda!`;
+            hook = `3 zasady dotyczące "${topic}", które całkowicie odmienią Twoje wyniki! 💡`;
+            body = `Zasada numer jeden: zapomnij o starych metodach. Zamiast tego zrób to: [krok 1]. Zasada numer dwa: skup się wyłącznie na efekcie dźwigni. I najważniejsza, trzecia zasada...`;
+            cta = `Zapisz tę rolkę na później, żeby nie zapomnieć!`;
         } else if (style === 'story') {
-            hook = `Kiedy zaczynałem z ${topic}, nikt we mnie nie wierzył...`;
-            body = `Wszyscy mówili mi, że to nie ma sensu. Popełniłem mnóstwo kosztownych błędów, zanim znalazłem ten jeden złoty klucz. Dziś dzielę się tym z Tobą, żebyś oszczędził miesiące bezowocnych poszukiwań.`;
-            cta = `Napisz w komentarzu "START", a wyślę Ci pełny poradnik!`;
+            hook = `Kiedy zaczynałem z "${topic}", każdy mówił mi, że to nie ma sensu... 📖`;
+            body = `Wszyscy wokół myśleli, że tracę czas. Popełniłem mnóstwo błędów i niemal się poddałem, aż w końcu odkryłem ten jeden punkt zwrotny... Od tej pory wszystko się zmieniło.`;
+            cta = `Podziel się tym wideo z kimś, kto tego potrzebuje!`;
         } else {
-            hook = `🤫 Strzeżony sekret, który zmienia wszystko w temacie: ${topic}.`;
-            body = `Wielcy graczi trzymają to w tajemnicy, bo daje im to ogromną przewagę. Kiedy poznasz ten mechanizm, codzienne działania staną się proste, a zasięgi i wyniki wystrzelą w górę.`;
-            cta = `Zaobserwuj profil, żeby nie ominąć kolejnych sekretów!`;
+            hook = `Sekret dotyczący "${topic}", którego nikt nie chce Ci wyjawić! 🤫`;
+            body = `Elity trzymają to w tajemnicy, bo daje to zbyt wielką przewagę. Gdy poznałem ten mechanizm, nie mogłem uwierzyć, jak proste to było.`;
+            cta = `Zaobserwuj profil po codzienne dawki poufnej wiedzy!`;
         }
 
-        output.value = `🎬 GOTOWY SCENARIUSZ AI REELS:\n\n[0:00 - 0:03] HOOK:\n"${hook}"\n\n[0:03 - 0:25] TREŚĆ:\n${body}\n\n[0:25 - 0:30] CTA:\n"${cta}"\n\n📌 HASHTAGI:\n#shorts #viral #reels #rozwojosobisty #biznes #wskazówki`;
-        showToast("Wygenerowano scenariusz AI!");
+        const fullScript = `--- SCENARIUSZ REELS ---
+[HOOK / 0-3 sekunda]:
+${hook}
+
+[GŁÓWNA TREŚĆ / 3-20 sekunda]:
+${body}
+
+[CTA / 20-30 sekunda]:
+${cta}
+
+#shorts #viral #${topic.replace(/\s+/g, '')} #sukces #rozwój`;
+
+        output.value = fullScript;
+        showToast("Wygenerowano scenariusz!");
     }
 
     function copyGeneratorOutput() {
         const output = document.getElementById('genOutput');
-        if (!output.value) {
-            showToast("Najpierw wygeneruj scenariusz!");
-            return;
-        }
-        output.select();
-        document.execCommand('copy');
+        if (!output.value) return;
+        navigator.clipboard.writeText(output.value);
         showToast("Skopiowano do schowka!");
     }
 
     function sendToPublish() {
-        const text = document.getElementById('genOutput').value;
-        if (!text) {
-            showToast("Brak tekstu do wyeksportowania!");
+        const output = document.getElementById('genOutput').value;
+        if (!output) {
+            alert("Najpierw wygeneruj scenariusz!");
             return;
         }
-        document.getElementById('pubDescription').value = text;
-        document.getElementById('pubTitle').value = "Viralowy Reel #shorts";
+        document.getElementById('pubDescription').value = output;
+        document.getElementById('pubTitle').value = document.getElementById('genTopic').value || "Viralowa Rolka";
         switchTab('publish');
         showToast("Przeniesiono do studia publikacji!");
     }
 
-    // Publikacja YouTube
+    // Publikacja / Eksport
     function simulateVideoRender() {
-        showToast("🎞️ Renderowanie pionowego wideo 9:16 w toku...");
+        const title = document.getElementById('pubTitle').value;
+        if (!title) {
+            alert("Wpisz tytuł wideo!");
+            return;
+        }
+        showToast("Trwa renderowanie pionowego wideo 9:16 z napisami...");
         setTimeout(() => {
-            showToast("✅ Wideo wyrenderowane pomyślnie! Gotowe do publikacji.");
+            showToast("Wideo zostało pomyślnie wyrenderowane!");
         }, 2000);
     }
 
     function publishToYouTube() {
         const title = document.getElementById('pubTitle').value;
         if (!title) {
-            showToast("Wprowadź tytuł rolki!");
+            alert("Wpisz tytuł wideo!");
             return;
         }
-        showToast("🚀 Przesyłanie materiału na YouTube Shorts...");
+        showToast("Łączenie z API YouTube Shorts...");
         setTimeout(() => {
-            showToast("🎉 Opublikowano pomyślnie na YouTube Shorts! Zbieraj wyświetlenia!");
-        }, 2500);
+            alert("Pomyślnie opublikowano film jako YouTube Short!");
+        }, 1500);
     }
 
-    // Panel Admina
+    // Panel Administratora
     async function fetchAdminUsers() {
-        const adminBox = document.getElementById('adminUsersList');
-        adminBox.innerHTML = '<p style="color: var(--text-muted);">Pobieranie użytkowników...</p>';
+        const container = document.getElementById('adminUsersList');
+        container.innerHTML = '<p style="color: var(--text-muted);">Pobieranie użytkowników...</p>';
         try {
-            const { data, error } = await _supabase.from('users').select('id, username, role, role_expires_at').order('id', { ascending: true });
+            const { data, error } = await _supabase.from('users').select('*').order('id', { ascending: true });
             if (error) throw error;
 
-            adminBox.innerHTML = '';
-            if (!data || data.length === 0) {
-                adminBox.innerHTML = '<p style="color: var(--text-muted);">Brak użytkowników w bazie.</p>';
-                return;
-            }
-
-            data.forEach(u => {
-                let expiryStr = "Na stałe";
-                if (u.role_expires_at) {
-                    expiryStr = new Date(u.role_expires_at).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                }
-
+            container.innerHTML = '';
+            data.forEach(user => {
                 const div = document.createElement('div');
-                div.style.cssText = "background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;";
+                div.style.cssText = "background: var(--bg-card); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;";
+                
+                let roleColor = user.role === 'Administrator' ? '#ef4444' : (user.role === 'Subskrypcja' ? '#22c55e' : '#f59e0b');
+                
                 div.innerHTML = `
                     <div>
-                        <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${u.username}</div>
-                        <div style="font-size: 12px; color: var(--text-muted);">Ranga: <span style="color: #f59e0b; font-weight: bold;">${u.role}</span> (${expiryStr})</div>
+                        <div style="font-weight: bold; font-size: 15px; color: var(--text-main);">${user.username}</div>
+                        <div style="font-size: 12px; color: ${roleColor}; font-weight: bold;">Ranga: ${user.role}</div>
                     </div>
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                        <select id="role-select-${u.id}" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
-                            <option value="Brak subskrypcji" ${u.role === 'Brak subskrypcji' ? 'selected' : ''}>Brak subskrypcji</option>
-                            <option value="Subskrypcja" ${u.role === 'Subskrypcja' ? 'selected' : ''}>Subskrypcja</option>
-                            <option value="Administrator" ${u.role === 'Administrator' ? 'selected' : ''}>Administrator</option>
-                        </select>
-                        <select id="time-type-${u.id}" onchange="toggleDaysInput(${u.id})" style="background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
-                            <option value="forever">Na stałe</option>
-                            <option value="days">Na dni</option>
-                        </select>
-                        <input type="number" id="days-input-${u.id}" placeholder="Dni" min="1" value="30" style="display: none; width: 65px; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; font-size: 13px;">
-                        <button onclick="updateUserRole(${u.id})" class="mini-btn btn-primary" style="padding: 6px 12px;">Zapisz</button>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button onclick="adminSetRole(${user.id}, 'Subskrypcja', 30)" class="mini-btn" style="background: #22c55e;">Nadaj subskrypcję (30 dni)</button>
+                        <button onclick="adminSetRole(${user.id}, 'Brak subskrypcji', 0)" class="mini-btn" style="background: #ef4444;">Odbierz subskrypcję</button>
                     </div>
                 `;
-                adminBox.appendChild(div);
+                container.appendChild(div);
             });
         } catch (err) {
-            adminBox.innerHTML = `<p style="color: #ef4444;">Błąd pobierania użytkowników: ${err.message}</p>`;
+            container.innerHTML = `<p style="color: #ef4444;">Błąd pobierania użytkowników: ${err.message}</p>`;
         }
     }
 
-    function toggleDaysInput(userId) {
-        const timeType = document.getElementById(`time-type-${userId}`).value;
-        const daysInput = document.getElementById(`days-input-${userId}`);
-        daysInput.style.display = (timeType === 'days') ? 'inline-block' : 'none';
-    }
-
-    async function updateUserRole(userId) {
-        const newRole = document.getElementById(`role-select-${userId}`).value;
-        const timeType = document.getElementById(`time-type-${userId}`).value;
-        let expiresAt = null;
-
-        if (timeType === 'days' && newRole !== 'Brak subskrypcji') {
-            const daysCount = parseInt(document.getElementById(`days-input-${userId}`).value) || 30;
-            const now = new Date();
-            now.setDate(now.getDate() + daysCount);
-            expiresAt = now.toISOString();
-        }
-
+    async function adminSetRole(userId, newRole, days) {
         try {
-            const { error } = await _supabase.from('users').update({ 
-                role: newRole, 
-                role_expires_at: expiresAt 
-            }).eq('id', userId);
-
-            if (error) throw error;
-            showToast("Zaktualizowano rangę użytkownika!");
-            
-            if (currentUser && currentUser.id === userId) {
-                currentUser.role = newRole;
-                currentUser.role_expires_at = expiresAt;
-                localStorage.setItem('reels_user', JSON.stringify(currentUser));
-                initSession();
+            let updateData = { role: newRole };
+            if (days > 0) {
+                const expiry = new Date();
+                expiry.setDate(expiry.getDate() + days);
+                updateData.role_expires_at = expiry.toISOString();
+            } else {
+                updateData.role_expires_at = null;
             }
 
+            const { error } = await _supabase.from('users').update(updateData).eq('id', userId);
+            if (error) throw error;
+
+            showToast("Zaktualizowano uprawnienia użytkownika!");
             fetchAdminUsers();
         } catch (err) {
-            showToast("Błąd aktualizacji: " + err.message);
+            alert("Błąd aktualizacji: " + err.message);
         }
     }
 
+    // Motyw jasny / ciemny
     function toggleTheme() {
         const body = document.body;
-        const themeIcon = document.getElementById('themeIcon');
+        const currentTheme = body.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', newTheme);
+        
         const themeText = document.getElementById('themeText');
-
-        if (body.getAttribute('data-theme') === 'dark') {
-            body.setAttribute('data-theme', 'light');
-            if(themeIcon) themeIcon.textContent = '🌙';
-            if(themeText) themeText.textContent = 'Tryb ciemny';
+        const themeIcon = document.getElementById('themeIcon');
+        if (newTheme === 'light') {
+            if (themeText) themeText.textContent = "Tryb ciemny";
+            if (themeIcon) themeIcon.textContent = "🌙";
         } else {
-            body.setAttribute('data-theme', 'dark');
-            if(themeIcon) themeIcon.textContent = '☀️';
-            if(themeText) themeText.textContent = 'Tryb jasny';
+            if (themeText) themeText.textContent = "Tryb jasny";
+            if (themeIcon) themeIcon.textContent = "☀️";
         }
     }
 </script>
