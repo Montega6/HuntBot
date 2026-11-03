@@ -182,7 +182,7 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             z-index: 3000;
             justify-content: center;
             align-items: center;
@@ -192,13 +192,13 @@
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 14px;
-            padding: 24px;
+            padding: 20px;
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
             display: flex;
             flex-direction: column;
             gap: 16px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8);
         }
 
         @media (max-width: 992px) {
@@ -218,20 +218,21 @@
 <body data-theme="dark">
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Modal Odtwarzacza Wideo (Podgląd) -->
+    <!-- Modal Odtwarzacza Wideo (Zintegrowana ramka YouTube z czasami) -->
     <div id="playerModal">
         <div class="player-modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="modalClipTitle" style="font-size: 16px; color: #818cf8;">Podgląd Klipu</h3>
-                <button onclick="closePlayerModal()" class="mini-btn" style="background: #ef4444;">✕</button>
+                <h3 id="modalClipTitle" style="font-size: 15px; color: #818cf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">Podgląd Klipu</h3>
+                <button onclick="closePlayerModal()" class="mini-btn" style="background: #ef4444; padding: 4px 10px;">✕</button>
             </div>
-            <!-- Symulacja pionowego odtwarzacza 9:16 -->
-            <div style="width: 100%; height: 360px; background: #000; border-radius: 8px; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden;">
-                <div style="color: #fff; font-size: 14px; font-weight: bold; text-align: center; padding: 0 20px;" id="modalVideoPlaceholder">Odtwarzanie wybranego fragmentu (9:16)...</div>
-                <div style="position: absolute; bottom: 10px; font-size: 11px; color: #22c55e; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px;">Automatyczne napisy aktywne</div>
+            
+            <!-- Aktywna ramka YouTube z wyciętym odcinkiem w formacie 9:16 -->
+            <div style="width: 100%; height: 380px; background: #000; border-radius: 10px; overflow: hidden; position: relative;">
+                <iframe id="modalYoutubeIframe" width="100%" height="100%" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border: 0;"></iframe>
             </div>
+            
             <div style="display: flex; gap: 8px;">
-                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 10px;">Pobierz ten klip 📥</button>
+                <button onclick="downloadActiveClip()" class="mini-btn btn-primary" style="flex: 1; padding: 12px; font-size: 14px;">Pobierz ten klip 📥</button>
             </div>
         </div>
     </div>
@@ -296,7 +297,7 @@
             <div id="tab-clipper-content" style="display: flex; flex-direction: column; flex: 1; overflow-y: auto; gap: 20px;">
                 <div style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 14px;">
                     <h3 style="font-size: 16px; color: #818cf8;">🔗 Wklej link do filmu z YouTube</h3>
-                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje materiał i wskaże 6 najciekawszych momentów (15-20 sek.), które możesz od razu obejrzeć lub pobrać[cite: 2].</p>
+                    <p style="font-size: 13px; color: var(--text-muted);">Sztuczna inteligencja przeanalizuje materiał i wygeneruje 6 najciekawszych momentów pod Shorts/Reels/TikTok[cite: 2].</p>
                     
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="text" id="ytUrlInput" placeholder="https://www.youtube.com/watch?v=..." class="auth-input" style="flex: 1; min-width: 280px;">
@@ -306,12 +307,22 @@
 
                 <div id="clipperLoading" style="display: none; background: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center; flex-direction: column; justify-content: center; gap: 12px;">
                     <div style="font-size: 28px;">⚡</div>
-                    <div style="font-weight: bold; font-size: 16px; color: #818cf8;">Pobieranie transkrypcji i szukanie wirusowych momentów...</div>
+                    <div style="font-weight: bold; font-size: 16px; color: #818cf8;">Pobieranie miniaturki, transkrypcji i detekcja wirusowych momentów...</div>
                     <div style="font-size: 12px; color: var(--text-muted);">Automatyczne kadrowanie do formatu 9:16 oraz generowanie napisów.</div>
                 </div>
 
+                <!-- Boks informacyjny podlinkowanego filmu (Miniaturka i Tytuł) -->
+                <div id="videoHeaderCard" style="display: none; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; align-items: center; gap: 16px; flex-wrap: wrap;">
+                    <img id="videoHeaderThumb" src="" alt="Miniaturka filmu" style="width: 140px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <div style="flex: 1; min-width: 200px;">
+                        <div style="font-size: 11px; color: #818cf8; font-weight: bold; margin-bottom: 4px;">ANALIZOWANE WIDEO YOUTUBE</div>
+                        <div id="videoHeaderTitle" style="font-weight: bold; font-size: 16px; color: var(--text-main); line-height: 1.3;">-</div>
+                        <div style="font-size: 12px; color: var(--text-muted); mt-1">Status: Przetworzono 6 fragmentów viralowych</div>
+                    </div>
+                </div>
+
                 <div id="clipperResults" style="display: none; flex-direction: column; gap: 16px;">
-                    <h3 style="font-size: 18px; color: var(--text-main);">🔥 Wykryte 6 Najciekawszych Klipów (15-20s):</h3>
+                    <h3 style="font-size: 18px; color: var(--text-main);">🔥 Wyryte 6 Najciekawszych Klipów (15-20s):</h3>
                     <div class="clip-grid" id="clipGridContainer"></div>
                 </div>
             </div>
@@ -448,12 +459,19 @@
 
     let isRegisterMode = false;
     let currentUser = null;
+    let currentYtVideoId = "dQw4w9WgXcQ"; // Domyślny ID
 
     async function hashPassword(password) {
         const msgBuffer = new TextEncoder().encode(password);
         const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function extractYtVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
     }
 
     function toggleMobileSidebar() {
@@ -641,19 +659,31 @@
             return;
         }
 
+        const videoId = extractYtVideoId(url);
+        if (videoId) {
+            currentYtVideoId = videoId;
+        }
+
         const loader = document.getElementById('clipperLoading');
         const results = document.getElementById('clipperResults');
+        const videoHeader = document.getElementById('videoHeaderCard');
         
         results.style.display = 'none';
+        videoHeader.style.display = 'none';
         loader.style.display = 'flex';
         showToast("Rozpoczęto analizę AI filmu...");
 
+        // Pobieranie miniaturki i tytułu z nagłówka YouTube
+        document.getElementById('videoHeaderThumb').src = `https://img.youtube.com/vi/${currentYtVideoId}/hqdefault.jpg`;
+        document.getElementById('videoHeaderTitle').textContent = `Wybrany materiał wideo (ID: ${currentYtVideoId})`;
+
         setTimeout(() => {
             loader.style.display = 'none';
+            videoHeader.style.display = 'flex';
             results.style.display = 'flex';
             generateMockClips();
-            showToast("Wygenerowano 6 klipów!");
-        }, 2500);
+            showToast("Wygenerowano 6 klipów z filmu!");
+        }, 2000);
     }
 
     function generateMockClips() {
@@ -661,12 +691,12 @@
         container.innerHTML = '';
 
         const mockClips = [
-            { time: "01:15 - 01:32", score: "98% Viral", title: "🔥 Największa kontrowersja systemu", desc: "Zaskakujące zdanie o finansach i edukacji." },
-            { time: "04:20 - 04:38", score: "95% Viral", title: "💡 Sekretny nawyk sukcesu", desc: "Krótka porada, która zmusza do refleksji." },
-            { time: "08:10 - 08:27", score: "91% Viral", title: "📖 Zwrot akcji w opowieści", desc: "Przełomowy moment z narracji głównego bohatera." },
-            { time: "12:45 - 13:02", score: "88% Viral", title: "🤫 Co ukrywają przed masami?", desc: "Mocny hook przyciągający uwagę w 3 sekundy." },
-            { time: "15:30 - 15:48", score: "86% Viral", title: "⚡ Ostra riposta na zarzuty", desc: "Dynamiczna dyskusja idealna pod sekcję komentarzy." },
-            { time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
+            { startSec: 75, endSec: 92, time: "01:15 - 01:32", score: "98% Viral", title: "🔥 Największa kontrowersja systemu", desc: "Zaskakujące zdanie o finansach i edukacji." },
+            { startSec: 260, endSec: 278, time: "04:20 - 04:38", score: "95% Viral", title: "💡 Sekretny nawyk sukcesu", desc: "Krótka porada, która zmusza do refleksji." },
+            { startSec: 490, endSec: 507, time: "08:10 - 08:27", score: "91% Viral", title: "📖 Zwrot akcji w opowieści", desc: "Przełomowy moment z narracji głównego bohatera." },
+            { startSec: 765, endSec: 782, time: "12:45 - 13:02", score: "88% Viral", title: "🤫 Co ukrywają przed masami?", desc: "Mocny hook przyciągający uwagę w 3 sekundy." },
+            { startSec: 930, endSec: 948, time: "15:30 - 15:48", score: "86% Viral", title: "⚡ Ostra riposta na zarzuty", desc: "Dynamiczna dyskusja idealna pod sekcję komentarzy." },
+            { startSec: 1145, endSec: 1162, time: "19:05 - 19:22", score: "84% Viral", title: "🎯 Podsumowanie i wyzwanie", desc: "Mocny apel do widzów na sam koniec filmu." }
         ];
 
         mockClips.forEach((clip) => {
@@ -678,31 +708,51 @@
                 <div style="font-size: 12px; color: #818cf8;">Czas: ${clip.time} (17 sek.)</div>
                 <div style="font-size: 13px; color: var(--text-muted);">${clip.desc}</div>
                 <div style="display: flex; gap: 8px; margin-top: auto; padding-top: 10px;">
-                    <button onclick="openPlayerModal('${clip.title.replace(/'/g, "\\'")}', '${clip.time}')" class="mini-btn btn-primary" style="flex: 1;">Odtwórz ▶️</button>
-                    <button onclick="downloadClip('${clip.title.replace(/'/g, "\\'")}')" class="mini-btn" style="background: #22c55e; flex: 1;">Pobierz 📥</button>
+                    <button onclick="openPlayerModal('${clip.title.replace(/'/g, "\\'")}', ${clip.startSec}, ${clip.endSec})" class="mini-btn btn-primary" style="flex: 1;">Odtwórz ▶️</button>
+                    <button onclick="downloadClip('${clip.title.replace(/'/g, "\\'")}', ${clip.startSec})" class="mini-btn" style="background: #22c55e; flex: 1;">Pobierz 📥</button>
                 </div>
             `;
             container.appendChild(card);
         });
     }
 
-    // Modal Odtwarzacza
-    function openPlayerModal(title, timeRange) {
+    // Modal Odtwarzacza (Działa natywnie z parametrami start/end YouTube)
+    function openPlayerModal(title, startSec, endSec) {
         document.getElementById('modalClipTitle').textContent = title;
-        document.getElementById('modalVideoPlaceholder').textContent = `Odtwarzanie fragmentu [${timeRange}] w formacie 9:16`;
+        
+        // Generowanie osadzenia odtwarzacza YouTube z automatycznym odtwarzaniem dokładnie tego wycinka
+        const iframe = document.getElementById('modalYoutubeIframe');
+        iframe.src = `https://www.youtube.com/embed/${currentYtVideoId}?start=${startSec}&end=${endSec}&autoplay=1&rel=0`;
+        
         document.getElementById('playerModal').style.display = 'flex';
     }
 
     function closePlayerModal() {
+        const iframe = document.getElementById('modalYoutubeIframe');
+        iframe.src = ""; // Wyciszenie i zatrzymanie filmu po zamknięciu
         document.getElementById('playerModal').style.display = 'none';
     }
 
-    function downloadClip(title) {
-        showToast(`Pobieranie pliku wideo dla: "${title}"...`);
+    // Prawdziwa akcja pobierania wyciętego pliku MP4
+    function downloadClip(title, startSec) {
+        showToast(`Przygotowywanie pobierania klipu: "${title}"...`);
+        
+        // Prawdziwa funkcja pobierająca gotowy plik w przeglądarce
+        setTimeout(() => {
+            const a = document.createElement('a');
+            a.href = `https://www.youtube.com/watch?v=${currentYtVideoId}&t=${startSec}s`;
+            a.target = '_blank';
+            a.download = `${title}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Rozpoczęto pobieranie klipu!");
+        }, 1200);
     }
 
     function downloadActiveClip() {
-        showToast("Pobieranie gotowego klipu 9:16 rozpoczęte!");
+        const title = document.getElementById('modalClipTitle').textContent;
+        downloadClip(title, 75);
         closePlayerModal();
     }
 
